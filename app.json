@@ -1,25 +1,41 @@
 {
   "expo": {
-    "name": "dersteyiz-app",
-    "slug": "dersteyiz-app",
+    "name": "Dersteyiz",
+    "slug": "dersteyiz",
+    "scheme": "dersteyiz",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
+      "bundleIdentifier": "com.dersteyiz.app",
+      "buildNumber": "1",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.dersteyiz.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "supabaseUrl": "https://dosuweocrtcotvsunefn.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvc3V3ZW9jcnRjb3R2c3VuZWZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjI3NzMsImV4cCI6MjEwNDI5ODc3M30.ikFjn_eNAnwfZPBn8AQnxyEnQDHC_r76-UQmi-CWN4k"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization"
+    ]
   }
 }
