@@ -31,11 +31,15 @@
     },
     "extra": {
       "supabaseUrl": "https://dosuweocrtcotvsunefn.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvc3V3ZW9jcnRjb3R2c3VuZWZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjI3NzMsImV4cCI6MjEwNDI5ODc3M30.ikFjn_eNAnwfZPBn8AQnxyEnQDHC_r76-UQmi-CWN4k"
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvc3V3ZW9jcnRjb3R2c3VuZWZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjI3NzMsImV4cCI6MjEwNDI5ODc3M30.ikFjn_eNAnwfZPBn8AQnxyEnQDHC_r76-UQmi-CWN4k",
+      "eas": {
+        "projectId": "798bf004-6fc1-422c-95b9-79c80e9c2328"
+      }
     },
     "plugins": [
       "expo-secure-store",
       "expo-localization"
-    ]
+    ],
+    "owner": "baris_tuncer80"
   }
 }
