@@ -44,7 +44,7 @@ export default function FavoritesScreen() {
         .select(`
           teacher:teachers(
             *,
-            profile:profiles(*),
+            profile:profiles!teachers_profile_id_fkey(*),
             modes:teacher_modes(mode),
             locations:teacher_locations(id, city, district),
             categories:teacher_categories(category:categories(*)),

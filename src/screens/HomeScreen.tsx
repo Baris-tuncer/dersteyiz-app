@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
-import { fetchTeachers } from '../services/teacherService';
+import { fetchTeachers, fetchTeacher } from '../services/teacherService';
+import { formatPrice, getInitials } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
 import type { TeacherWithDetails, TeacherFilters } from '../types/teacher';
 import type { RootStackParamList } from '../types/navigation';
@@ -92,8 +93,11 @@ export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const { state: authState } = useAuth();
   const isLoggedIn = !!authState.session;
+  const isTeacher = authState.user?.user_metadata?.role === 'teacher';
+  const userId = authState.user?.id;
 
   const [teachers, setTeachers] = useState<TeacherWithDetails[]>([]);
+  const [myProfile, setMyProfile] = useState<TeacherWithDetails | null>(null);
   const [filters, setFilters] = useState<TeacherFilters>(INITIAL_FILTERS);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -109,6 +113,11 @@ export default function HomeScreen() {
           setTeachers(data);
           setError(false);
         }
+        // Fetch own profile for teacher users
+        if (isTeacher && userId) {
+          const me = await fetchTeacher(userId);
+          if (!cancelled && me) setMyProfile(me);
+        }
       } catch {
         if (!cancelled) setError(true);
       } finally {
@@ -118,12 +127,16 @@ export default function HomeScreen() {
 
     init();
     return () => { cancelled = true; };
-  }, []);
+  }, [isTeacher, userId]);
 
-  const filteredTeachers = useMemo(
-    () => applyFilters(teachers, filters),
-    [teachers, filters],
-  );
+  const filteredTeachers = useMemo(() => {
+    const filtered = applyFilters(teachers, filters);
+    // Exclude own card for teacher users
+    if (isTeacher && userId) {
+      return filtered.filter((t) => t.profile_id !== userId);
+    }
+    return filtered;
+  }, [teachers, filters, isTeacher, userId]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -131,12 +144,16 @@ export default function HomeScreen() {
       const data = await fetchTeachers();
       setTeachers(data);
       setError(false);
+      if (isTeacher && userId) {
+        const me = await fetchTeacher(userId);
+        if (me) setMyProfile(me);
+      }
     } catch {
       setError(true);
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [isTeacher, userId]);
 
   const handleTeacherPress = useCallback(
     (teacher: TeacherWithDetails) => {
@@ -203,14 +220,17 @@ export default function HomeScreen() {
   );
 
   const renderHeader = useCallback(
-    () => (
-      <View style={styles.resultCountContainer}>
-        <Text style={styles.resultCount}>
-          {filteredTeachers.length} sonuç
-        </Text>
-      </View>
-    ),
-    [filteredTeachers.length],
+    () => {
+      if (isTeacher) return null;
+      return (
+        <View style={styles.resultCountContainer}>
+          <Text style={styles.resultCount}>
+            {filteredTeachers.length} sonuç
+          </Text>
+        </View>
+      );
+    },
+    [isTeacher, filteredTeachers.length],
   );
 
   return (
@@ -228,15 +248,90 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Filters */}
-        <FilterBar filters={filters} onChange={setFilters} />
+        {/* Filters (only for parents/visitors) */}
+        {!isTeacher && <FilterBar filters={filters} onChange={setFilters} />}
+
+        {/* Teacher Dashboard (only for teachers) */}
+        {isTeacher && myProfile && (
+          <View style={styles.dashboardContainer}>
+            {/* Own Profile Card */}
+            <TouchableOpacity
+              style={styles.myProfileCard}
+              onPress={() => navigation.navigate('TeacherDetail', { teacherId: myProfile.profile_id })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.myProfileHeader}>
+                {myProfile.profile?.avatar_url ? (
+                  <Image source={{ uri: myProfile.profile.avatar_url }} style={styles.myAvatar} />
+                ) : (
+                  <View style={[styles.myAvatar, styles.myAvatarPlaceholder]}>
+                    <Text style={styles.myAvatarInitials}>
+                      {getInitials(myProfile.profile?.full_name ?? '')}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.myProfileInfo}>
+                  <View style={styles.myNameRow}>
+                    <Text style={styles.myName} numberOfLines={1}>
+                      {myProfile.profile?.full_name ?? ''}
+                    </Text>
+                    {myProfile.is_verified && (
+                      <MaterialIcons name="verified" size={18} color={Colors.navy} style={{ marginLeft: 4 }} />
+                    )}
+                  </View>
+                  <Text style={styles.myMajor}>{myProfile.major}</Text>
+                  <Text style={styles.myRate}>{formatPrice(myProfile.hourly_rate)} / saat</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+              </View>
+            </TouchableOpacity>
+
+            {/* Stats Grid */}
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Ionicons name="eye-outline" size={22} color={Colors.navy} />
+                <Text style={styles.statValue}>{myProfile.view_count}</Text>
+                <Text style={styles.statLabel}>Görüntülenme</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="chatbubble-outline" size={22} color={Colors.navy} />
+                <Text style={styles.statValue}>{myProfile.contact_count}</Text>
+                <Text style={styles.statLabel}>İletişim</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons
+                  name={myProfile.is_verified ? 'checkmark-circle' : 'time-outline'}
+                  size={22}
+                  color={myProfile.is_verified ? Colors.navy : Colors.warning}
+                />
+                <Text style={styles.statValue}>
+                  {myProfile.is_verified ? 'Onaylı' : 'Bekliyor'}
+                </Text>
+                <Text style={styles.statLabel}>Diploma</Text>
+              </View>
+            </View>
+
+            {/* Subscription Banner */}
+            {!myProfile.subscription_status && (
+              <View style={styles.subscriptionBanner}>
+                <Ionicons name="alert-circle" size={18} color={Colors.orange} />
+                <Text style={styles.subscriptionText}>
+                  Profiliniz şu an görünmüyor. Abonelik ile öğrencilere ulaşın.
+                </Text>
+              </View>
+            )}
+
+            {/* Other Teachers Header */}
+            <Text style={styles.otherTeachersTitle}>Diğer Öğretmenler</Text>
+          </View>
+        )}
 
         {/* Teacher List */}
         <FlatList
           data={filteredTeachers}
           renderItem={renderTeacher}
           keyExtractor={keyExtractor}
-          ListHeaderComponent={!loading && !error && teachers.length > 0 ? renderHeader : undefined}
+          ListHeaderComponent={!loading && !error ? renderHeader : undefined}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -324,5 +419,119 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textOnDark,
+  },
+  // Teacher Dashboard
+  dashboardContainer: {
+    paddingBottom: 8,
+  },
+  myProfileCard: {
+    backgroundColor: Colors.surface,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  myProfileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  myAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  myAvatarPlaceholder: {
+    backgroundColor: Colors.navyLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  myAvatarInitials: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.navy,
+  },
+  myProfileInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  myNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  myName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    flexShrink: 1,
+  },
+  myMajor: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  myRate: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.orange,
+    marginTop: 2,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  subscriptionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.orangeLight,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  subscriptionText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  otherTeachersTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 12,
   },
 });

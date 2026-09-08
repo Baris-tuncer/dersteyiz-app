@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
-  ScrollView,
+  Pressable,
   Linking,
   StyleSheet,
 } from 'react-native';
@@ -13,6 +13,7 @@ import { Colors } from '../constants/colors';
 import { formatPrice, getInitials, formatWhatsAppUrl } from '../utils/formatters';
 import type { TeacherWithDetails } from '../types/teacher';
 import Badge from './Badge';
+import VideoPlayerModal from './VideoPlayerModal';
 
 interface TeacherCardProps {
   teacher: TeacherWithDetails;
@@ -21,6 +22,7 @@ interface TeacherCardProps {
 }
 
 export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCardProps) {
+  const [videoModalVisible, setVideoModalVisible] = useState(false);
   const { profile, categories, tags, modes, locations } = teacher;
 
   const hasOnline = modes.some((m) => m.mode === 'online');
@@ -63,7 +65,7 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
               <MaterialIcons
                 name="verified"
                 size={18}
-                color="#3897F0"
+                color={Colors.navy}
                 style={styles.verifiedIcon}
               />
             )}
@@ -76,6 +78,7 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
             {formatPrice(teacher.hourly_rate)} / saat
           </Text>
         </View>
+
       </View>
 
       {/* Bio */}
@@ -83,21 +86,29 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
         {teacher.bio}
       </Text>
 
+      {/* Video Button */}
+      {teacher.video_url && (
+        <Pressable
+          style={styles.videoButton}
+          onPress={() => setVideoModalVisible(true)}
+          onStartShouldSetResponder={() => true}
+        >
+          <Ionicons name="play-circle" size={20} color={Colors.navy} />
+          <Text style={styles.videoButtonText}>Tanıtım Videosu</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.navy} />
+        </Pressable>
+      )}
+
       {/* Categories & Tags */}
       {(categories.length > 0 || tags.length > 0) && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.badgeScroll}
-          contentContainerStyle={styles.badgeScrollContent}
-        >
+        <View style={styles.badgeWrap}>
           {categories.map((c) => (
-            <Badge key={`cat-${c.category.id}`} label={c.category.name} variant="navy" />
+            <Badge key={`cat-${c.category.id}`} label={c.category.name} variant="gray" />
           ))}
           {tags.map((t) => (
             <Badge key={`tag-${t.tag.id}`} label={t.tag.name} variant="gray" />
           ))}
-        </ScrollView>
+        </View>
       )}
 
       {/* Modes */}
@@ -124,6 +135,15 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
             {locationText}
           </Text>
         </View>
+      )}
+
+      {/* Video Player Modal */}
+      {teacher.video_url && videoModalVisible && (
+        <VideoPlayerModal
+          visible
+          videoUrl={teacher.video_url}
+          onClose={() => setVideoModalVisible(false)}
+        />
       )}
 
       {/* WhatsApp Button */}
@@ -224,12 +244,27 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 10,
   },
-  badgeScroll: {
+  badgeWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     marginBottom: 10,
   },
-  badgeScrollContent: {
+  videoButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.navyLight,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    gap: 8,
+  },
+  videoButtonText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.navy,
   },
   modesRow: {
     flexDirection: 'row',

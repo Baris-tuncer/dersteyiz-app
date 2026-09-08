@@ -8,18 +8,73 @@ import {
   Alert,
   StyleSheet,
   ActivityIndicator,
+  Modal,
+  FlatList,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
 import { getInitials } from '../../utils/formatters';
-import { CATEGORIES, MAJORS, TEACHING_MODES, TAGS } from '../../constants/categories';
+import { CATEGORIES, MAJORS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import { TURKEY_CITIES } from '../../constants/cities';
+
+interface PickerModalProps {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  data: { id: string | number; label: string }[];
+  selected: (string | number)[];
+  onToggle: (id: string | number) => void;
+  multi?: boolean;
+}
+
+function PickerModal({ visible, onClose, title, data, selected, onToggle, multi = true }: PickerModalProps) {
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.content}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>{title}</Text>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+              <Ionicons name="close" size={22} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={data}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => {
+              const isSelected = selected.includes(item.id);
+              return (
+                <TouchableOpacity
+                  style={modalStyles.item}
+                  onPress={() => {
+                    onToggle(item.id);
+                    if (!multi) onClose();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[modalStyles.itemText, isSelected && modalStyles.itemTextSelected]}>
+                    {item.label}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons name="checkmark-circle" size={22} color={Colors.navy} />
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
@@ -29,9 +84,17 @@ export default function EditProfileScreen() {
   const isTeacher = userMeta?.role === 'teacher';
   const userId = state.user?.id;
 
+  const formatPhone = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 11);
+    if (digits.length <= 4) return `(${digits}`;
+    if (digits.length <= 7) return `(${digits.slice(0, 4)}) ${digits.slice(4)}`;
+    if (digits.length <= 9) return `(${digits.slice(0, 4)}) ${digits.slice(4, 7)} ${digits.slice(7)}`;
+    return `(${digits.slice(0, 4)}) ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9)}`;
+  };
+
   // Form state
   const [fullName, setFullName] = useState(userMeta?.full_name ?? '');
-  const [phone, setPhone] = useState(userMeta?.phone_number ?? '');
+  const [phone, setPhone] = useState(formatPhone(userMeta?.phone_number ?? ''));
   const [email, setEmail] = useState(state.user?.email ?? '');
   const [bio, setBio] = useState('');
   const [major, setMajor] = useState('');
@@ -41,8 +104,16 @@ export default function EditProfileScreen() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [city, setCity] = useState('');
   const [university, setUniversity] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Modal visibility
+  const [showMajorPicker, setShowMajorPicker] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showModePicker, setShowModePicker] = useState(false);
+  const [showTagPicker, setShowTagPicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
 
   // Load existing teacher data
   useEffect(() => {
@@ -55,6 +126,16 @@ export default function EditProfileScreen() {
       }
 
       try {
+        // Load avatar from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', userId)
+          .single();
+        if (!cancelled && profile?.avatar_url) {
+          setAvatarUrl(profile.avatar_url);
+        }
+
         const { data: teacher } = await supabase
           .from('teachers')
           .select(`
@@ -79,7 +160,7 @@ export default function EditProfileScreen() {
           if (firstLoc) setCity(firstLoc.city);
         }
       } catch {
-        // Silently handle - fields will show empty defaults
+        // fields will show empty defaults
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -89,21 +170,24 @@ export default function EditProfileScreen() {
     return () => { cancelled = true; };
   }, [userId, isTeacher]);
 
-  const toggleCategory = (id: number) => {
+  const toggleCategory = (id: string | number) => {
+    const numId = Number(id);
     setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
+      prev.includes(numId) ? prev.filter((c) => c !== numId) : [...prev, numId],
     );
   };
 
-  const toggleMode = (mode: string) => {
+  const toggleMode = (mode: string | number) => {
+    const strMode = String(mode);
     setSelectedModes((prev) =>
-      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode],
+      prev.includes(strMode) ? prev.filter((m) => m !== strMode) : [...prev, strMode],
     );
   };
 
-  const toggleTag = (id: number) => {
+  const toggleTag = (id: string | number) => {
+    const numId = Number(id);
     setSelectedTags((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
+      prev.includes(numId) ? prev.filter((t) => t !== numId) : [...prev, numId],
     );
   };
 
@@ -132,16 +216,18 @@ export default function EditProfileScreen() {
       });
       const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
-      const filePath = `${userId}/avatar.${ext}`;
+      const filePath = `${userId}/avatar_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, decode(base64), { contentType, upsert: true });
+        .upload(filePath, decode(base64), { contentType });
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', userId);
+      const newUrl = `${data.publicUrl}?t=${Date.now()}`;
+      await supabase.from('profiles').update({ avatar_url: newUrl }).eq('id', userId);
+      setAvatarUrl(newUrl);
       Alert.alert('Başarılı', 'Fotoğrafınız güncellendi.');
     } catch (err: any) {
       Alert.alert('Hata', err?.message || 'Fotoğraf yüklenemedi.');
@@ -157,23 +243,20 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: fullName.trim(),
-          phone_number: phone.trim(),
+          phone_number: phone.replace(/[^0-9]/g, ''),
         })
         .eq('id', userId);
 
       if (profileError) throw profileError;
 
-      // Update user metadata
       await supabase.auth.updateUser({
         data: { full_name: fullName.trim(), phone_number: phone.trim() },
       });
 
-      // Update teacher-specific data
       if (isTeacher) {
         const { error: teacherError } = await supabase
           .from('teachers')
@@ -182,13 +265,12 @@ export default function EditProfileScreen() {
             major,
             university: university.trim(),
             hourly_rate: parseInt(hourlyRate, 10) || 0,
-            phone_number: phone.trim(),
+            phone_number: phone.replace(/[^0-9]/g, ''),
           })
           .eq('profile_id', userId);
 
         if (teacherError) throw teacherError;
 
-        // Replace modes
         await supabase.from('teacher_modes').delete().eq('teacher_id', userId);
         if (selectedModes.length > 0) {
           await supabase.from('teacher_modes').insert(
@@ -196,7 +278,6 @@ export default function EditProfileScreen() {
           );
         }
 
-        // Replace categories
         await supabase.from('teacher_categories').delete().eq('teacher_id', userId);
         if (selectedCategories.length > 0) {
           await supabase.from('teacher_categories').insert(
@@ -204,7 +285,6 @@ export default function EditProfileScreen() {
           );
         }
 
-        // Replace tags
         await supabase.from('teacher_tags').delete().eq('teacher_id', userId);
         if (selectedTags.length > 0) {
           await supabase.from('teacher_tags').insert(
@@ -212,7 +292,6 @@ export default function EditProfileScreen() {
           );
         }
 
-        // Replace location
         await supabase.from('teacher_locations').delete().eq('teacher_id', userId);
         if (selectedModes.includes('face_to_face') && city) {
           await supabase.from('teacher_locations').insert({
@@ -236,6 +315,27 @@ export default function EditProfileScreen() {
     }
   };
 
+  // Helper to get summary text for dropdowns
+  const getMajorText = () => major || 'Branş seçin';
+  const getCategoryText = () => {
+    if (selectedCategories.length === 0) return 'Kategori seçin';
+    const names = selectedCategories.map((id) => CATEGORIES.find((c) => c.id === id)?.name).filter(Boolean);
+    return names.join(', ');
+  };
+  const getModeText = () => {
+    if (selectedModes.length === 0) return 'Ders verme şekli seçin';
+    return selectedModes.map((v) => TEACHING_MODES.find((m) => m.value === v)?.label).filter(Boolean).join(', ');
+  };
+  const filteredTags = getTagsForCategories(selectedCategories);
+  const getTagText = () => {
+    if (selectedTags.length === 0) return 'Etiket seçin';
+    const allTags = getTagsForCategories([1,2,3,4,5,6,7,8,9,10,11,12]);
+    const names = selectedTags.map((id) => allTags.find((t) => t.id === id)?.name).filter(Boolean);
+    if (names.length <= 2) return names.join(', ');
+    return `${names.length} etiket seçildi`;
+  };
+  const getCityText = () => city || 'Şehir seçin';
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -257,9 +357,13 @@ export default function EditProfileScreen() {
         onPress={handlePhotoPicker}
         activeOpacity={0.7}
       >
-        <View style={styles.photoCircle}>
-          <Text style={styles.photoInitials}>{getInitials(fullName || 'K')}</Text>
-        </View>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.photoImage} />
+        ) : (
+          <View style={styles.photoCircle}>
+            <Text style={styles.photoInitials}>{getInitials(fullName || 'K')}</Text>
+          </View>
+        )}
         <View style={styles.cameraOverlay}>
           <Ionicons name="camera" size={16} color={Colors.textOnDark} />
         </View>
@@ -284,10 +388,11 @@ export default function EditProfileScreen() {
         <TextInput
           style={styles.input}
           value={phone}
-          onChangeText={setPhone}
-          placeholder="05XX XXX XX XX"
+          onChangeText={(text) => setPhone(formatPhone(text))}
+          placeholder="(05XX) XXX XX XX"
           placeholderTextColor={Colors.textTertiary}
-          keyboardType="phone-pad"
+          keyboardType="number-pad"
+          maxLength={16}
         />
       </View>
 
@@ -328,7 +433,7 @@ export default function EditProfileScreen() {
               style={[styles.input, styles.inputMultiline]}
               value={bio}
               onChangeText={setBio}
-              placeholder="Kendinizi tanıtın, deneyimlerinizi paylaşın..."
+              placeholder="Kendinizi tanıtın..."
               placeholderTextColor={Colors.textTertiary}
               multiline
               numberOfLines={4}
@@ -338,158 +443,70 @@ export default function EditProfileScreen() {
             <Text style={styles.charCount}>{bio.length}/500</Text>
           </View>
 
+          {/* Branş Dropdown */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Branş</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipScrollContent}
-            >
-              {MAJORS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  style={[
-                    styles.chip,
-                    major === m && styles.chipSelected,
-                  ]}
-                  onPress={() => setMajor(major === m ? '' : m)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      major === m && styles.chipTextSelected,
-                    ]}
-                  >
-                    {m}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowMajorPicker(true)} activeOpacity={0.7}>
+              <Text style={[styles.dropdownText, !major && styles.dropdownPlaceholder]}>{getMajorText()}</Text>
+              <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
+          {/* Saatlik Ücret */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Saatlik Ücret (₺)</Text>
             <TextInput
               style={styles.input}
               value={hourlyRate}
-              onChangeText={setHourlyRate}
+              onChangeText={(text) => setHourlyRate(text.replace(/[^0-9]/g, ''))}
               placeholder="Örn: 1500"
               placeholderTextColor={Colors.textTertiary}
-              keyboardType="numeric"
+              keyboardType="number-pad"
             />
           </View>
 
+          {/* Kategoriler Dropdown */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Kategoriler</Text>
-            <View style={styles.chipsWrap}>
-              {CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.chip,
-                    selectedCategories.includes(cat.id) && styles.chipSelected,
-                  ]}
-                  onPress={() => toggleCategory(cat.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedCategories.includes(cat.id) && styles.chipTextSelected,
-                    ]}
-                  >
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryPicker(true)} activeOpacity={0.7}>
+              <Text style={[styles.dropdownText, selectedCategories.length === 0 && styles.dropdownPlaceholder]} numberOfLines={1}>{getCategoryText()}</Text>
+              <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
+          {/* Ders Verme Şekli Dropdown */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Ders Verme Şekli</Text>
-            <View style={styles.chipsRow}>
-              {TEACHING_MODES.map((mode) => (
-                <TouchableOpacity
-                  key={mode.value}
-                  style={[
-                    styles.chip,
-                    selectedModes.includes(mode.value) && styles.chipSelected,
-                  ]}
-                  onPress={() => toggleMode(mode.value)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedModes.includes(mode.value) && styles.chipTextSelected,
-                    ]}
-                  >
-                    {mode.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowModePicker(true)} activeOpacity={0.7}>
+              <Text style={[styles.dropdownText, selectedModes.length === 0 && styles.dropdownPlaceholder]} numberOfLines={1}>{getModeText()}</Text>
+              <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
+          {/* Etiketler Dropdown */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Etiketler</Text>
-            <View style={styles.chipsWrap}>
-              {TAGS.map((tag) => (
-                <TouchableOpacity
-                  key={tag.id}
-                  style={[
-                    styles.chip,
-                    selectedTags.includes(tag.id) && styles.chipSelected,
-                  ]}
-                  onPress={() => toggleTag(tag.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedTags.includes(tag.id) && styles.chipTextSelected,
-                    ]}
-                  >
-                    {tag.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowTagPicker(true)} activeOpacity={0.7}>
+              <Text style={[styles.dropdownText, selectedTags.length === 0 && styles.dropdownPlaceholder]} numberOfLines={1}>{getTagText()}</Text>
+              <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
+          {/* Şehir Dropdown */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Şehir</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipScrollContent}
-            >
-              {TURKEY_CITIES.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[
-                    styles.chip,
-                    city === c && styles.chipSelected,
-                  ]}
-                  onPress={() => setCity(city === c ? '' : c)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      city === c && styles.chipTextSelected,
-                    ]}
-                  >
-                    {c}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TouchableOpacity style={styles.dropdown} onPress={() => setShowCityPicker(true)} activeOpacity={0.7}>
+              <Text style={[styles.dropdownText, !city && styles.dropdownPlaceholder]}>{getCityText()}</Text>
+              <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
+          {/* Diploma */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Diploma</Text>
+            <Text style={styles.diplomaNotice}>
+              Diplomanız yalnızca öğretmenlik yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
+            </Text>
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={async () => {
@@ -499,31 +516,18 @@ export default function EditProfileScreen() {
                   Alert.alert('İzin Gerekli', 'Galeri erişim izni gereklidir.');
                   return;
                 }
-                const result = await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ['images'],
-                  quality: 0.8,
-                });
+                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
                 if (result.canceled || !result.assets[0]) return;
                 try {
                   const uri = result.assets[0].uri;
-                  const base64 = await FileSystem.readAsStringAsync(uri, {
-                    encoding: FileSystem.EncodingType.Base64,
-                  });
+                  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
                   const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
                   const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
-                  const filePath = `${userId}/diploma.${ext}`;
-
-                  const { error: uploadError } = await supabase.storage
-                    .from('diplomas')
-                    .upload(filePath, decode(base64), { contentType, upsert: true });
+                  const filePath = `${userId}/diploma_${Date.now()}.${ext}`;
+                  const { error: uploadError } = await supabase.storage.from('diplomas').upload(filePath, decode(base64), { contentType });
                   if (uploadError) throw uploadError;
-
                   const { data } = supabase.storage.from('diplomas').getPublicUrl(filePath);
-                  await supabase.from('teachers').update({
-                    diploma_url: data.publicUrl,
-                    diploma_status: 'pending',
-                  }).eq('profile_id', userId);
-
+                  await supabase.from('teachers').update({ diploma_url: data.publicUrl, diploma_status: 'pending' }).eq('profile_id', userId);
                   Alert.alert('Başarılı', 'Diplomanız yüklendi ve incelemeye gönderildi.');
                 } catch (err: any) {
                   Alert.alert('Hata', err?.message || 'Diploma yüklenemedi.');
@@ -553,9 +557,100 @@ export default function EditProfileScreen() {
       </TouchableOpacity>
 
       <View style={styles.bottomSpacer} />
+
+      {/* Modals */}
+      <PickerModal
+        visible={showMajorPicker}
+        onClose={() => setShowMajorPicker(false)}
+        title="Branş Seçin"
+        data={MAJORS.map((m) => ({ id: m, label: m }))}
+        selected={major ? [major] : []}
+        onToggle={(id) => setMajor(major === String(id) ? '' : String(id))}
+        multi={false}
+      />
+      <PickerModal
+        visible={showCategoryPicker}
+        onClose={() => setShowCategoryPicker(false)}
+        title="Kategoriler"
+        data={CATEGORIES.map((c) => ({ id: c.id, label: c.name }))}
+        selected={selectedCategories}
+        onToggle={toggleCategory}
+      />
+      <PickerModal
+        visible={showModePicker}
+        onClose={() => setShowModePicker(false)}
+        title="Ders Verme Şekli"
+        data={TEACHING_MODES.map((m) => ({ id: m.value, label: m.label }))}
+        selected={selectedModes}
+        onToggle={toggleMode}
+      />
+      <PickerModal
+        visible={showTagPicker}
+        onClose={() => setShowTagPicker(false)}
+        title="Etiketler"
+        data={filteredTags.map((t) => ({ id: t.id, label: t.name }))}
+        selected={selectedTags}
+        onToggle={toggleTag}
+      />
+      <PickerModal
+        visible={showCityPicker}
+        onClose={() => setShowCityPicker(false)}
+        title="Şehir Seçin"
+        data={TURKEY_CITIES.map((c) => ({ id: c, label: c }))}
+        selected={city ? [city] : []}
+        onToggle={(id) => setCity(city === String(id) ? '' : String(id))}
+        multi={false}
+      />
     </ScrollView>
   );
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  content: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 32,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  item: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  itemText: {
+    fontSize: 16,
+    color: Colors.textPrimary,
+    flex: 1,
+  },
+  itemTextSelected: {
+    color: Colors.navy,
+    fontWeight: '600',
+  },
+});
 
 const styles = StyleSheet.create({
   screen: {
@@ -573,11 +668,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.background,
   },
-
-  // Photo
   photoContainer: {
     alignItems: 'center',
     marginBottom: 28,
+  },
+  photoImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
   },
   photoCircle: {
     width: 88,
@@ -612,8 +710,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
   },
-
-  // Fields
   fieldGroup: {
     marginBottom: 20,
   },
@@ -653,8 +749,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 6,
   },
-
-  // Section
   divider: {
     height: 1,
     backgroundColor: Colors.border,
@@ -666,44 +760,26 @@ const styles = StyleSheet.create({
     color: Colors.navy,
     marginBottom: 16,
   },
-
-  // Chips
-  chipsRow: {
+  dropdown: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  chipsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chipScrollContent: {
-    gap: 8,
-    paddingRight: 16,
-  },
-  chip: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.borderDark,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  chipSelected: {
-    backgroundColor: Colors.navyLight,
-    borderColor: Colors.navy,
+  dropdownText: {
+    fontSize: 15,
+    color: Colors.textPrimary,
+    flex: 1,
+    marginRight: 8,
   },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textSecondary,
+  dropdownPlaceholder: {
+    color: Colors.textTertiary,
   },
-  chipTextSelected: {
-    color: Colors.navy,
-    fontWeight: '600',
-  },
-
-  // Upload
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -721,8 +797,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textSecondary,
   },
-
-  // Save
+  diplomaNotice: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
   saveButton: {
     backgroundColor: Colors.orange,
     borderRadius: 14,

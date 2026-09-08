@@ -18,6 +18,7 @@ import { formatPrice, getInitials, formatWhatsAppUrl } from '../utils/formatters
 import { useAuth } from '../contexts/AuthContext';
 import type { TeacherWithDetails } from '../types/teacher';
 import type { RootStackParamList } from '../types/navigation';
+import VideoPlayerModal from '../components/VideoPlayerModal';
 
 type RouteProps = NativeStackScreenProps<RootStackParamList, 'TeacherDetail'>['route'];
 
@@ -30,6 +31,7 @@ export default function TeacherDetailScreen() {
   const [teacher, setTeacher] = useState<TeacherWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [videoModalVisible, setVideoModalVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,7 +118,7 @@ export default function TeacherDetailScreen() {
             <MaterialIcons
               name="verified"
               size={22}
-              color="#3897F0"
+              color={Colors.navy}
               style={styles.verifiedIcon}
             />
           )}
@@ -137,6 +139,19 @@ export default function TeacherDetailScreen() {
           </View>
         ) : null}
       </View>
+
+      {/* Video Button */}
+      {teacher.video_url && (
+        <TouchableOpacity
+          style={styles.videoButton}
+          onPress={() => setVideoModalVisible(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="play-circle" size={20} color={Colors.navy} />
+          <Text style={styles.videoButtonText}>Kendini Tanıtıyor</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+        </TouchableOpacity>
+      )}
 
       {/* Stats Row */}
       <View style={styles.statsRow}>
@@ -250,6 +265,15 @@ export default function TeacherDetailScreen() {
         <Text style={styles.reportText}>Şikâyet Et</Text>
       </TouchableOpacity>
 
+      {/* Video Player Modal */}
+      {teacher.video_url && videoModalVisible && (
+        <VideoPlayerModal
+          visible
+          videoUrl={teacher.video_url}
+          onClose={() => setVideoModalVisible(false)}
+        />
+      )}
+
       <View style={styles.bottomSpacer} />
     </ScrollView>
   );
@@ -349,6 +373,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  videoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.navyLight,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  videoButtonText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.navy,
   },
   statsRow: {
     flexDirection: 'row',

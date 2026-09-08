@@ -38,7 +38,8 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-localization"
+      "expo-localization",
+      "expo-video"
     ],
     "owner": "baris_tuncer80"
   }

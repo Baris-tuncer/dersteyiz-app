@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,13 @@ import {
   Linking,
   StyleSheet,
   SafeAreaView,
+  Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../config/supabase';
 import { getInitials, formatWhatsAppUrl } from '../../utils/formatters';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -71,6 +73,40 @@ export default function ProfileScreen() {
 
   const userName = state.user?.user_metadata?.full_name ?? 'Kullanıcı';
   const userEmail = state.user?.email ?? '';
+  const isTeacher = state.user?.user_metadata?.role === 'teacher';
+  const userId = state.user?.id;
+
+  const [stats, setStats] = useState({ view_count: 0, contact_count: 0, is_verified: false, subscription_status: false });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Load avatar
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) return;
+      supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single()
+        .then(({ data }) => {
+          if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+        });
+    }, [userId]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isTeacher || !userId) return;
+      supabase
+        .from('teachers')
+        .select('view_count, contact_count, is_verified, subscription_status')
+        .eq('profile_id', userId)
+        .single()
+        .then(({ data }) => {
+          if (data) setStats(data);
+        });
+    }, [isTeacher, userId]),
+  );
 
   const handleSignOut = () => {
     Alert.alert(
@@ -117,13 +153,17 @@ export default function ProfileScreen() {
       description: 'Kişisel bilgilerinizi güncelleyin',
       onPress: () => navigation.navigate('EditProfile'),
     },
-    {
-      iconLib: 'ionicons',
-      iconName: 'heart-outline',
-      label: 'Favori Öğretmenlerim',
-      description: 'Kaydettiğiniz öğretmenleri görün',
-      onPress: () => navigation.navigate('MainTabs', { screen: 'Favorites' }),
-    },
+    ...(!isTeacher
+      ? [
+          {
+            iconLib: 'ionicons' as const,
+            iconName: 'heart-outline' as IoniconsName,
+            label: 'Favori Öğretmenlerim',
+            description: 'Kaydettiğiniz öğretmenleri görün',
+            onPress: () => navigation.navigate('MainTabs', { screen: 'Favorites' }),
+          },
+        ]
+      : []),
     {
       iconLib: 'ionicons',
       iconName: 'settings-outline',
@@ -197,16 +237,58 @@ export default function ProfileScreen() {
 
         {/* User Card */}
         <View style={styles.userCard}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>
-              {getInitials(userName)}
-            </Text>
-          </View>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.userAvatarImage} />
+          ) : (
+            <View style={styles.userAvatar}>
+              <Text style={styles.userAvatarText}>
+                {getInitials(userName)}
+              </Text>
+            </View>
+          )}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{userName}</Text>
             <Text style={styles.userEmail}>{userEmail}</Text>
           </View>
         </View>
+
+        {/* Teacher Stats */}
+        {isTeacher && (
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitleStats}>İSTATİSTİKLERİM</Text>
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Ionicons name="eye-outline" size={22} color={Colors.navy} />
+                <Text style={styles.statNumber}>{stats.view_count}</Text>
+                <Text style={styles.statLabel}>Görüntülenme</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="chatbubble-outline" size={22} color={Colors.navy} />
+                <Text style={styles.statNumber}>{stats.contact_count}</Text>
+                <Text style={styles.statLabel}>İletişim</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons
+                  name={stats.is_verified ? 'checkmark-circle' : 'time-outline'}
+                  size={22}
+                  color={stats.is_verified ? Colors.navy : Colors.orange}
+                />
+                <Text style={[styles.statNumber, { fontSize: 14 }]}>
+                  {stats.is_verified ? 'Onaylı' : 'Bekliyor'}
+                </Text>
+                <Text style={styles.statLabel}>Diploma</Text>
+              </View>
+            </View>
+            {!stats.subscription_status && (
+              <View style={styles.subscriptionBanner}>
+                <Ionicons name="alert-circle-outline" size={18} color={Colors.orange} />
+                <Text style={styles.subscriptionText}>
+                  Profiliniz henüz listelenmede görünmüyor. Abonelik aktif değil.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Profile Section */}
         <View style={styles.menuSection}>
@@ -292,6 +374,11 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 24,
   },
+  userAvatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
   userAvatar: {
     width: 56,
     height: 56,
@@ -318,6 +405,60 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+
+  // Stats
+  statsSection: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  sectionTitleStats: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textTertiary,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    gap: 6,
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.navy,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textTertiary,
+  },
+  subscriptionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8F0',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+    gap: 8,
+  },
+  subscriptionText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
   },
 
   // Menu Sections

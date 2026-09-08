@@ -13,16 +13,17 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
-import { CATEGORIES, MAJORS, TAGS, TEACHING_MODES } from '../../constants/categories';
+import { CATEGORIES, MAJORS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import { TURKEY_CITIES } from '../../constants/cities';
 import { decode } from 'base64-arraybuffer';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export default function ProfileSetupScreen() {
   const { signOut, completeProfile, state } = useAuth();
@@ -35,6 +36,7 @@ export default function ProfileSetupScreen() {
   const [university, setUniversity] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [videoUri, setVideoUri] = useState<string | null>(null);
   const [diplomaUri, setDiplomaUri] = useState<string | null>(null);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
@@ -84,7 +86,7 @@ export default function ProfileSetupScreen() {
     setCustomTags((prev) => prev.filter((t) => t !== tag));
   };
 
-  const pickImage = async (type: 'photo' | 'diploma') => {
+  const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gereklidir.');
@@ -93,17 +95,37 @@ export default function ProfileSetupScreen() {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: type === 'photo',
-      aspect: type === 'photo' ? [1, 1] : undefined,
+      allowsEditing: true,
+      aspect: [1, 1],
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets[0]) {
-      if (type === 'photo') {
-        setPhotoUri(result.assets[0].uri);
-      } else {
-        setDiplomaUri(result.assets[0].uri);
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const pickVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin Gerekli', 'Galeri erişim izni gereklidir.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['videos'],
+      allowsEditing: true,
+      videoMaxDuration: 30,
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const duration = result.assets[0].duration ?? 0;
+      if (duration > 31000) {
+        Alert.alert('Hata', 'Video en fazla 30 saniye olabilir.');
+        return;
       }
+      setVideoUri(result.assets[0].uri);
     }
   };
 
@@ -113,12 +135,17 @@ export default function ProfileSetupScreen() {
         encoding: FileSystem.EncodingType.Base64,
       });
       const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
-      const filePath = `${path}.${ext}`;
+      const isVideo = ['mp4', 'mov', 'm4v'].includes(ext);
+      const contentType = isVideo
+        ? 'video/mp4'
+        : ext === 'png'
+          ? 'image/png'
+          : 'image/jpeg';
+      const filePath = `${path}_${Date.now()}.${ext}`;
 
       const { error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, decode(base64), { contentType, upsert: true });
+        .upload(filePath, decode(base64), { contentType });
 
       if (error) return null;
 
@@ -130,8 +157,16 @@ export default function ProfileSetupScreen() {
   };
 
   const handleSave = async () => {
+    if (!photoUri) {
+      Alert.alert('Hata', 'Lütfen bir profil fotoğrafı seçin.');
+      return;
+    }
     if (!bio.trim()) {
       Alert.alert('Hata', 'Lütfen kendinizi tanıtan bir biyografi yazın.');
+      return;
+    }
+    if (!university.trim()) {
+      Alert.alert('Hata', 'Lütfen mezun olduğunuz okulu girin.');
       return;
     }
     if (selectedMajors.length === 0) {
@@ -154,6 +189,10 @@ export default function ProfileSetupScreen() {
       Alert.alert('Hata', 'Yüz yüze ders için lütfen şehir seçin.');
       return;
     }
+    if (selectedTags.length === 0 && customTags.length === 0) {
+      Alert.alert('Hata', 'Lütfen en az bir etiket seçin.');
+      return;
+    }
 
     const user = state.user;
     if (!user) {
@@ -167,6 +206,12 @@ export default function ProfileSetupScreen() {
       let avatarUrl: string | null = null;
       if (photoUri) {
         avatarUrl = await uploadFile(photoUri, 'avatars', `${user.id}/avatar`);
+      }
+
+      // Upload video
+      let videoUrl: string | null = null;
+      if (videoUri) {
+        videoUrl = await uploadFile(videoUri, 'videos', `${user.id}/intro`);
       }
 
       // Upload diploma
@@ -189,6 +234,7 @@ export default function ProfileSetupScreen() {
         phone_number: user.user_metadata?.phone_number ?? '',
         email: user.email ?? '',
         hourly_rate: parseInt(hourlyRate, 10),
+        video_url: videoUrl,
         diploma_url: diplomaUrl,
         diploma_status: diplomaUrl ? 'pending' : 'pending',
       });
@@ -321,16 +367,19 @@ export default function ProfileSetupScreen() {
 
           {/* Photo Upload */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Profil Fotoğrafı</Text>
+            <Text style={styles.label}>Profil Fotoğrafı <Text style={styles.required}>*</Text></Text>
             <TouchableOpacity
-              style={styles.uploadButton}
-              onPress={() => pickImage('photo')}
+              style={photoUri ? styles.photoPreviewContainer : styles.uploadButton}
+              onPress={pickImage}
               activeOpacity={0.7}
             >
               {photoUri ? (
-                <View style={styles.uploadedRow}>
-                  <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                  <Text style={styles.uploadedText}>Fotoğraf seçildi</Text>
+                <View style={styles.photoPreviewRow}>
+                  <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+                  <View style={styles.photoPreviewInfo}>
+                    <Text style={styles.photoPreviewText}>Fotoğraf seçildi</Text>
+                    <Text style={styles.photoChangeText}>Değiştirmek için dokun</Text>
+                  </View>
                 </View>
               ) : (
                 <View style={styles.uploadRow}>
@@ -343,7 +392,7 @@ export default function ProfileSetupScreen() {
 
           {/* Bio */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Hakkınızda</Text>
+            <Text style={styles.label}>Hakkınızda <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={[styles.input, styles.multilineInput]}
               placeholder="Kendinizi tanıtın, deneyimlerinizden bahsedin..."
@@ -358,7 +407,7 @@ export default function ProfileSetupScreen() {
 
           {/* University */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mezun Olduğunuz Okul</Text>
+            <Text style={styles.label}>Mezun Olduğunuz Okul <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="Örn: İstanbul Üniversitesi"
@@ -372,7 +421,7 @@ export default function ProfileSetupScreen() {
 
           {/* Major Selection */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Branş (birden fazla seçebilirsiniz)</Text>
+            <Text style={styles.label}>Branş (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
             <View style={styles.checkboxGrid}>
               {MAJORS.map((major) => (
                 <TouchableOpacity
@@ -399,21 +448,21 @@ export default function ProfileSetupScreen() {
 
           {/* Hourly Rate */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Saatlik Ücret (TL)</Text>
+            <Text style={styles.label}>Saatlik Ücret (TL) <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="Örn: 1500"
               placeholderTextColor={Colors.textTertiary}
               value={hourlyRate}
-              onChangeText={setHourlyRate}
-              keyboardType="numeric"
+              onChangeText={(text) => setHourlyRate(text.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
               returnKeyType="done"
             />
           </View>
 
           {/* Categories */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Kategoriler (birden fazla seçebilirsiniz)</Text>
+            <Text style={styles.label}>Kategoriler (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
             <View style={styles.checkboxGrid}>
               {CATEGORIES.map((cat) => (
                 <TouchableOpacity
@@ -440,7 +489,7 @@ export default function ProfileSetupScreen() {
 
           {/* Teaching Modes */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ders Verme Şekli (birden fazla seçebilirsiniz)</Text>
+            <Text style={styles.label}>Ders Verme Şekli (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
             <View style={styles.checkboxGrid}>
               {TEACHING_MODES.map((mode) => (
                 <TouchableOpacity
@@ -468,7 +517,7 @@ export default function ProfileSetupScreen() {
           {/* City Picker (shown if face_to_face selected) */}
           {showsFaceToFace && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Şehir</Text>
+              <Text style={styles.label}>Şehir <Text style={styles.required}>*</Text></Text>
               <TouchableOpacity
                 style={styles.pickerButton}
                 onPress={() => setShowCityPicker(true)}
@@ -489,9 +538,12 @@ export default function ProfileSetupScreen() {
 
           {/* Tags */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Etiketler (birden fazla seçebilirsiniz)</Text>
+            <Text style={styles.label}>Etiketler (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
+            {selectedCategories.length === 0 && (
+              <Text style={styles.tagHint}>Etiketleri görmek için önce kategori seçin.</Text>
+            )}
             <View style={styles.checkboxGrid}>
-              {TAGS.map((tag) => (
+              {getTagsForCategories(selectedCategories).map((tag) => (
                 <TouchableOpacity
                   key={tag.id}
                   style={styles.checkboxRow}
@@ -548,12 +600,54 @@ export default function ProfileSetupScreen() {
             </View>
           </View>
 
-          {/* Diploma Upload */}
+          {/* Video Upload (Opsiyonel) */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Diploma / Sertifika</Text>
+            <Text style={styles.label}>
+              Tanıtım Videosu <Text style={styles.optionalBadge}>(Opsiyonel)</Text>
+            </Text>
+            <Text style={styles.videoNotice}>
+              Kendinizi tanıtan en fazla 30 saniyelik bir video yükleyebilirsiniz. Bu video profilinizde görüntülenecektir.
+            </Text>
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={() => pickImage('diploma')}
+              onPress={pickVideo}
+              activeOpacity={0.7}
+            >
+              {videoUri ? (
+                <View style={styles.uploadedRow}>
+                  <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+                  <Text style={styles.uploadedText}>Video seçildi</Text>
+                </View>
+              ) : (
+                <View style={styles.uploadRow}>
+                  <Ionicons name="videocam-outline" size={20} color={Colors.textSecondary} />
+                  <Text style={styles.uploadText}>Video Yükle</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Diploma Upload */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>
+              Diploma / Mezuniyet Belgesi <Text style={styles.optionalBadge}>(Opsiyonel)</Text>
+            </Text>
+            <Text style={styles.diplomaNotice}>
+              Diplomanız yalnızca öğretmenlik yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
+            </Text>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={async () => {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
+                  Alert.alert('İzin Gerekli', 'Galeri erişim izni gereklidir.');
+                  return;
+                }
+                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+                if (!result.canceled && result.assets[0]) {
+                  setDiplomaUri(result.assets[0].uri);
+                }
+              }}
               activeOpacity={0.7}
             >
               {diplomaUri ? (
@@ -563,7 +657,7 @@ export default function ProfileSetupScreen() {
                 </View>
               ) : (
                 <View style={styles.uploadRow}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={Colors.textSecondary} />
+                  <Ionicons name="document-outline" size={20} color={Colors.textSecondary} />
                   <Text style={styles.uploadText}>Belge Yükle</Text>
                 </View>
               )}
@@ -741,6 +835,36 @@ const styles = StyleSheet.create({
   customTagAddButtonDisabled: {
     backgroundColor: Colors.border,
   },
+  photoPreviewContainer: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+  },
+  photoPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  photoPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  photoPreviewInfo: {
+    flex: 1,
+  },
+  photoPreviewText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  photoChangeText: {
+    fontSize: 13,
+    color: Colors.orange,
+    marginTop: 2,
+  },
   uploadButton: {
     backgroundColor: Colors.surface,
     borderWidth: 1.5,
@@ -763,6 +887,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  optionalBadge: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: Colors.textTertiary,
+    fontStyle: 'italic',
+  },
+  videoNotice: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  required: {
+    color: Colors.error,
+    fontWeight: '700',
+  },
+  tagHint: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    fontStyle: 'italic',
+    marginBottom: 8,
+  },
+  diplomaNotice: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+    lineHeight: 19,
+    marginBottom: 10,
   },
   uploadedRow: {
     flexDirection: 'row',

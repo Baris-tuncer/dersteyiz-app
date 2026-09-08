@@ -124,6 +124,17 @@ function getModalOptions(key: FilterType): { label: string; value: string | numb
   }
 }
 
+function getFilterCount(filters: TeacherFilters, key: FilterType): number {
+  switch (key) {
+    case 'category': return filters.categoryIds.length;
+    case 'major': return filters.majors.length;
+    case 'mode': return filters.modes.length;
+    case 'city': return filters.city ? 1 : 0;
+    case 'tag': return filters.tagIds.length;
+    case 'price': return filters.priceSort ? 1 : 0;
+  }
+}
+
 function isMultiSelect(key: FilterType): boolean {
   return key !== 'city' && key !== 'price';
 }
@@ -225,6 +236,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       <View style={styles.chipContainer}>
         {FILTER_CHIPS.map((chip) => {
           const active = isFilterActive(filters, chip.key);
+          const count = getFilterCount(filters, chip.key);
           return (
             <TouchableOpacity
               key={chip.key}
@@ -233,14 +245,13 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
               activeOpacity={0.7}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {getFilterLabel(filters, chip.key)}
+                {chip.label}
               </Text>
-              <Ionicons
-                name="chevron-down"
-                size={14}
-                color={active ? Colors.textOnDark : Colors.textSecondary}
-                style={{ marginLeft: 4 }}
-              />
+              {count > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{count}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -330,6 +341,21 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   chipTextActive: {
+    color: Colors.textOnDark,
+  },
+  badge: {
+    backgroundColor: Colors.orange,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.textOnDark,
   },
   clearChip: {
