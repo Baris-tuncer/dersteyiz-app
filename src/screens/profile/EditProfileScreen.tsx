@@ -553,7 +553,7 @@ export default function EditProfileScreen() {
                   Alert.alert('İzin Gerekli', 'Galeri erişim izni gereklidir.');
                   return;
                 }
-                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
                 if (result.canceled || !result.assets[0]) return;
                 try {
                   const uri = result.assets[0].uri;

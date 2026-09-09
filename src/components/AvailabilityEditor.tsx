@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { fetchAvailability, setAvailability } from '../services/availabilityService';
 
-const DAY_LABELS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const DAY_LABELS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8); // 08:00 - 22:00
 
 interface Slot {
@@ -118,8 +118,8 @@ export default function AvailabilityEditor({ teacherId }: AvailabilityEditorProp
     try {
       await setAvailability(teacherId, slots);
       Alert.alert('Kaydedildi', 'Müsaitlik takviminiz güncellendi.');
-    } catch {
-      Alert.alert('Hata', 'Müsaitlik kaydedilemedi.');
+    } catch (err: any) {
+      Alert.alert('Hata', err?.message || 'Müsaitlik kaydedilemedi.');
     } finally {
       setSaving(false);
     }
@@ -143,7 +143,7 @@ export default function AvailabilityEditor({ teacherId }: AvailabilityEditorProp
         <View style={styles.hourLabelSpace} />
         {[1, 2, 3, 4, 5, 6, 0].map((day) => (
           <Text key={day} style={styles.dayHeaderText}>
-            {DAY_LABELS[day].slice(0, 3)}
+            {DAY_LABELS[day]}
           </Text>
         ))}
       </View>

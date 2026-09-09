@@ -50,6 +50,11 @@ export default function RegisterScreen() {
       Alert.alert('Hata', 'Lütfen adınızı ve soyadınızı girin.');
       return;
     }
+    const nameParts = fullName.trim().split(/\s+/);
+    if (nameParts.length < 2 || (nameParts[nameParts.length - 1]?.length ?? 0) < 2) {
+      Alert.alert('Hata', 'Lütfen geçerli bir ad ve soyad girin. Soyad en az 2 harf olmalıdır.');
+      return;
+    }
     if (!validatePhone(phone)) {
       Alert.alert('Hata', 'Lütfen geçerli bir telefon numarası girin.');
       return;
@@ -100,7 +105,7 @@ export default function RegisterScreen() {
 
           {/* Role Selector */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Hesap Türü</Text>
+            <Text style={styles.label}>Hesap Türü <Text style={styles.required}>*</Text></Text>
             <View style={styles.roleContainer}>
               <TouchableOpacity
                 style={[
@@ -142,7 +147,7 @@ export default function RegisterScreen() {
 
           {/* Full Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ad Soyad</Text>
+            <Text style={styles.label}>Ad Soyad <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="Adınız ve soyadınız"
@@ -156,7 +161,7 @@ export default function RegisterScreen() {
 
           {/* Phone */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Telefon</Text>
+            <Text style={styles.label}>Telefon <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="05XX XXX XX XX"
@@ -170,7 +175,7 @@ export default function RegisterScreen() {
 
           {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>E-posta</Text>
+            <Text style={styles.label}>E-posta <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="ornek@email.com"
@@ -186,7 +191,7 @@ export default function RegisterScreen() {
 
           {/* Password */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Şifre</Text>
+            <Text style={styles.label}>Şifre <Text style={styles.required}>*</Text></Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -288,6 +293,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textPrimary,
     marginBottom: 8,
+  },
+  required: {
+    color: '#E53935',
+    fontWeight: '700',
   },
   input: {
     backgroundColor: Colors.surface,

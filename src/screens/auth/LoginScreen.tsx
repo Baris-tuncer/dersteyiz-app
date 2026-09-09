@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { BackButton } from '../../components/BackButton';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/colors';
+
+const REMEMBER_KEY = 'dersteyiz_remember_email';
 
 type AuthStackParamList = {
   Welcome: undefined;
@@ -36,6 +39,16 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(REMEMBER_KEY).then((saved) => {
+      if (saved) {
+        setEmail(saved);
+        setRememberMe(true);
+      }
+    });
+  }, []);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -45,6 +58,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      if (rememberMe) {
+        await AsyncStorage.setItem(REMEMBER_KEY, email.trim());
+      } else {
+        await AsyncStorage.removeItem(REMEMBER_KEY);
+      }
       await signIn(email.trim(), password);
     } catch (error: any) {
       Alert.alert(
@@ -116,14 +134,27 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Forgot Password */}
-          <TouchableOpacity
-            style={styles.forgotLink}
-            onPress={() => navigation.navigate('ForgotPassword')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.forgotText}>Şifremi Unuttum</Text>
-          </TouchableOpacity>
+          {/* Remember Me + Forgot Password */}
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              style={styles.rememberRow}
+              onPress={() => setRememberMe(!rememberMe)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={rememberMe ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={rememberMe ? Colors.navy : Colors.textTertiary}
+              />
+              <Text style={styles.rememberText}>Beni Hatırla</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.forgotText}>Şifremi Unuttum</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Login Button */}
           <TouchableOpacity
@@ -219,9 +250,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: Colors.textSecondary,
   },
-  forgotLink: {
-    alignSelf: 'flex-end',
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 28,
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rememberText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   forgotText: {
     fontSize: 14,
