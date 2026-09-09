@@ -9,6 +9,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -18,7 +19,7 @@ import {
   fetchTrialRequestsForParent,
   updateTrialRequestStatus,
 } from '../services/trialService';
-import { getInitials } from '../utils/formatters';
+import { getInitials, formatWhatsAppUrl } from '../utils/formatters';
 import type { TrialRequest } from '../types/super';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -139,6 +140,23 @@ export default function TrialRequestsScreen() {
               <Text style={styles.rejectText}>Reddet</Text>
             </TouchableOpacity>
           </View>
+        )}
+
+        {!isTeacher && item.status === 'accepted' && item.teacher?.phone_number && (
+          <TouchableOpacity
+            style={styles.whatsappButton}
+            onPress={() => {
+              const url = formatWhatsAppUrl(
+                item.teacher!.phone_number!,
+                `Merhaba, Dersteyiz üzerinden tanışma talebim kabul edildi. Uygun olduğunuz bir zamanda görüşebilir miyiz?`,
+              );
+              Linking.openURL(url);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="logo-whatsapp" size={18} color={Colors.textOnDark} />
+            <Text style={styles.whatsappText}>WhatsApp ile İletişime Geç</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -303,5 +321,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.error,
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+    marginTop: 14,
+  },
+  whatsappText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textOnDark,
   },
 });

@@ -11,6 +11,7 @@ import {
   Modal,
   FlatList,
   Image,
+  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -106,6 +107,8 @@ export default function EditProfileScreen() {
   const [city, setCity] = useState('');
   const [university, setUniversity] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [showDiploma, setShowDiploma] = useState(false);
+  const [diplomaApproved, setDiplomaApproved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -121,20 +124,28 @@ export default function EditProfileScreen() {
     let cancelled = false;
 
     async function loadProfile() {
-      if (!userId || !isTeacher) {
+      if (!userId) {
         setLoading(false);
         return;
       }
 
       try {
-        // Load avatar from profile
+        // Load avatar + city from profile
         const { data: profile } = await supabase
           .from('profiles')
-          .select('avatar_url')
+          .select('avatar_url, city')
           .eq('id', userId)
           .single();
         if (!cancelled && profile?.avatar_url) {
           setAvatarUrl(profile.avatar_url);
+        }
+        if (!cancelled && profile?.city && !isTeacher) {
+          setCity(profile.city);
+        }
+
+        if (!isTeacher) {
+          if (!cancelled) setLoading(false);
+          return;
         }
 
         const { data: teacher } = await supabase
@@ -159,6 +170,8 @@ export default function EditProfileScreen() {
           setSelectedTags(teacher.tags?.map((t: any) => t.tag_id) ?? []);
           const firstLoc = teacher.locations?.[0];
           if (firstLoc) setCity(firstLoc.city);
+          setShowDiploma(teacher.show_diploma ?? false);
+          setDiplomaApproved(teacher.diploma_status === 'approved');
         }
       } catch {
         // fields will show empty defaults
@@ -244,12 +257,16 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
+      const profileUpdate: Record<string, any> = {
+        full_name: fullName.trim(),
+        phone_number: phone.replace(/[^0-9]/g, ''),
+      };
+      if (!isTeacher) {
+        profileUpdate.city = city || null;
+      }
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          full_name: fullName.trim(),
-          phone_number: phone.replace(/[^0-9]/g, ''),
-        })
+        .update(profileUpdate)
         .eq('id', userId);
 
       if (profileError) throw profileError;
@@ -267,6 +284,7 @@ export default function EditProfileScreen() {
             university: university.trim(),
             hourly_rate: parseInt(hourlyRate, 10) || 0,
             phone_number: phone.replace(/[^0-9]/g, ''),
+            show_diploma: showDiploma,
           })
           .eq('profile_id', userId);
 
@@ -410,6 +428,17 @@ export default function EditProfileScreen() {
         <Text style={styles.fieldHint}>E-posta adresi değiştirilemez.</Text>
       </View>
 
+      {/* City — for parents */}
+      {!isTeacher && (
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Şehir</Text>
+          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCityPicker(true)} activeOpacity={0.7}>
+            <Text style={[styles.dropdownText, !city && styles.dropdownPlaceholder]}>{getCityText()}</Text>
+            <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Teacher-specific Fields */}
       {isTeacher && (
         <>
@@ -546,6 +575,20 @@ export default function EditProfileScreen() {
               <Ionicons name="attach" size={18} color={Colors.textSecondary} />
               <Text style={styles.uploadText}>Diploma Yükle</Text>
             </TouchableOpacity>
+            {diplomaApproved && (
+              <View style={styles.diplomaToggle}>
+                <View style={styles.diplomaToggleText}>
+                  <Text style={styles.fieldLabel}>Diplomamı Velilere Göster</Text>
+                  <Text style={styles.fieldHint}>Açık olursa diplomanız profil detayınızda görünür.</Text>
+                </View>
+                <Switch
+                  value={showDiploma}
+                  onValueChange={setShowDiploma}
+                  trackColor={{ false: Colors.border, true: Colors.navy }}
+                  thumbColor={Colors.surface}
+                />
+              </View>
+            )}
           </View>
         </>
       )}
@@ -804,6 +847,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textSecondary,
+  },
+  diplomaToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingVertical: 8,
+  },
+  diplomaToggleText: {
+    flex: 1,
+    marginRight: 12,
   },
   diplomaNotice: {
     fontSize: 13,

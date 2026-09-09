@@ -259,8 +259,8 @@ export default function TeacherDetailScreen() {
         </View>
       )}
 
-      {/* Diploma Section */}
-      {teacher.diploma_status === 'approved' && teacher.diploma_url && (
+      {/* Diploma Section — only if teacher opted in */}
+      {teacher.diploma_status === 'approved' && teacher.diploma_url && teacher.show_diploma && (
         <DiplomaSection diplomaUrl={teacher.diploma_url} />
       )}
 

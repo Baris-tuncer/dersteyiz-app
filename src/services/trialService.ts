@@ -16,6 +16,12 @@ export async function createTrialRequest(
     .select()
     .single();
   if (error) throw error;
+
+  // Send push notification to teacher (non-blocking)
+  supabase.functions.invoke('send-trial-notification', {
+    body: { request_id: data.id, type: 'new_request' },
+  }).catch(() => {});
+
   return data as TrialRequest;
 }
 
@@ -37,7 +43,7 @@ export async function fetchTrialRequestsForParent(parentId: string): Promise<Tri
     .from('trial_requests')
     .select(`
       *,
-      teacher:profiles!trial_requests_teacher_id_fkey(full_name, avatar_url)
+      teacher:profiles!trial_requests_teacher_id_fkey(full_name, avatar_url, phone_number)
     `)
     .eq('parent_id', parentId)
     .order('created_at', { ascending: false });
@@ -59,6 +65,11 @@ export async function updateTrialRequestStatus(
     .update(update)
     .eq('id', requestId);
   if (error) throw error;
+
+  // Send push notification to parent (non-blocking)
+  supabase.functions.invoke('send-trial-notification', {
+    body: { request_id: requestId, type: 'status_update' },
+  }).catch(() => {});
 }
 
 export async function getPendingTrialCount(teacherId: string): Promise<number> {

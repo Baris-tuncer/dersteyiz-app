@@ -31,6 +31,12 @@ export async function createReview(
     .select()
     .single();
   if (error) throw error;
+
+  // Send push notification to teacher (non-blocking)
+  supabase.functions.invoke('send-review-notification', {
+    body: { teacher_id: teacherId, reviewer_id: reviewerId, rating },
+  }).catch(() => {});
+
   return data as Review;
 }
 

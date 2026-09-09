@@ -64,6 +64,7 @@ export interface TeacherWithDetails {
   avg_rating: number;
   review_count: number;
   experience_years: number;
+  show_diploma: boolean;
   profile: Profile;
   modes: TeacherMode[];
   locations: TeacherLocation[];

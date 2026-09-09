@@ -48,6 +48,7 @@ export interface TrialRequest {
   teacher?: {
     full_name: string;
     avatar_url: string | null;
+    phone_number?: string | null;
   };
 }
 

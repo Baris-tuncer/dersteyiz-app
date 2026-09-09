@@ -17,6 +17,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:234,
     contact_count: 18,
     profile: {
@@ -58,6 +59,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:189,
     contact_count: 12,
     profile: {
@@ -96,6 +98,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:97,
     contact_count: 6,
     profile: {
@@ -133,6 +136,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:312,
     contact_count: 24,
     profile: {
@@ -173,6 +177,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:156,
     contact_count: 9,
     profile: {
@@ -210,6 +215,7 @@ export const MOCK_TEACHERS: TeacherWithDetails[] = [
     avg_rating: 0,
     review_count: 0,
     experience_years: 0,
+    show_diploma: false,
     view_count:78,
     contact_count: 4,
     profile: {

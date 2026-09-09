@@ -38,9 +38,19 @@ export async function fetchTeacher(profileId: string): Promise<TeacherWithDetail
 }
 
 export async function logView(teacherId: string, viewerId?: string): Promise<void> {
+  let viewerCity: string | null = null;
+  if (viewerId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('city')
+      .eq('id', viewerId)
+      .single();
+    viewerCity = data?.city ?? null;
+  }
   await supabase.from('view_logs').insert({
     teacher_id: teacherId,
     viewer_id: viewerId ?? null,
+    viewer_city: viewerCity,
   });
 }
 
