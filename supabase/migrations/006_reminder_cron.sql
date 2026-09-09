@@ -1,11 +1,11 @@
 -- ============================================================
 -- 006: Cron job for reminder push notifications
--- Calls send-reminder-notifications Edge Function every 15 min
+-- Calls send-reminder-notifications Edge Function every 5 min
 -- ============================================================
 
 SELECT cron.schedule(
   'send-reminder-notifications',
-  '*/15 * * * *',
+  '*/5 * * * *',
   $$
   SELECT net.http_post(
     url := 'https://dosuweocrtcotvsunefn.supabase.co/functions/v1/send-reminder-notifications',

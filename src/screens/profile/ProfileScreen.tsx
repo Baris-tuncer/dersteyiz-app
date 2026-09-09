@@ -29,27 +29,28 @@ interface MenuItem {
   description: string;
   onPress: () => void;
   destructive?: boolean;
+  highlight?: boolean;
 }
 
 function MenuRow({ item }: { item: MenuItem }) {
   return (
     <TouchableOpacity
-      style={styles.menuRow}
+      style={[styles.menuRow, item.highlight && styles.menuRowHighlight]}
       onPress={item.onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.menuIconContainer}>
+      <View style={[styles.menuIconContainer, item.highlight && styles.menuIconContainerHighlight]}>
         {item.iconLib === 'mci' ? (
           <MaterialCommunityIcons
             name={item.iconName as MCIName}
             size={18}
-            color={Colors.navy}
+            color={item.highlight ? Colors.textOnDark : Colors.navy}
           />
         ) : (
           <Ionicons
             name={item.iconName as IoniconsName}
             size={18}
-            color={Colors.navy}
+            color={item.highlight ? Colors.textOnDark : Colors.navy}
           />
         )}
       </View>
@@ -58,13 +59,16 @@ function MenuRow({ item }: { item: MenuItem }) {
           style={[
             styles.menuLabel,
             item.destructive && styles.menuLabelDestructive,
+            item.highlight && styles.menuLabelHighlight,
           ]}
         >
           {item.label}
         </Text>
-        <Text style={styles.menuDescription}>{item.description}</Text>
+        <Text style={[styles.menuDescription, item.highlight && styles.menuDescriptionHighlight]}>
+          {item.description}
+        </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={18} color={item.highlight ? Colors.textOnDark : Colors.textTertiary} />
     </TouchableOpacity>
   );
 }
@@ -171,6 +175,7 @@ export default function ProfileScreen() {
       label: 'Profilimi Düzenle',
       description: 'Kişisel bilgilerinizi güncelleyin',
       onPress: () => navigation.navigate('EditProfile'),
+      highlight: true,
     },
     ...(isTeacher
       ? [
@@ -546,6 +551,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 6,
   },
+  menuRowHighlight: {
+    backgroundColor: Colors.orange,
+    borderColor: Colors.orange,
+  },
   menuIconContainer: {
     width: 36,
     height: 36,
@@ -554,6 +563,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  menuIconContainerHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   menuContent: {
     flex: 1,
@@ -567,9 +579,15 @@ const styles = StyleSheet.create({
   menuLabelDestructive: {
     color: Colors.error,
   },
+  menuLabelHighlight: {
+    color: Colors.textOnDark,
+  },
   menuDescription: {
     fontSize: 13,
     color: Colors.textTertiary,
+  },
+  menuDescriptionHighlight: {
+    color: 'rgba(255,255,255,0.8)',
   },
 
   // Sign Out
