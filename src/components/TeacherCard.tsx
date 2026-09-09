@@ -14,16 +14,22 @@ import { formatPrice, getInitials, formatWhatsAppUrl } from '../utils/formatters
 import type { TeacherWithDetails } from '../types/teacher';
 import Badge from './Badge';
 import VideoPlayerModal from './VideoPlayerModal';
+import StarRating from './StarRating';
+import { useCompare } from '../contexts/CompareContext';
 
 interface TeacherCardProps {
   teacher: TeacherWithDetails;
   onPress: () => void;
   isLoggedIn: boolean;
+  isBoosted?: boolean;
+  showCompare?: boolean;
 }
 
-export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCardProps) {
+export default function TeacherCard({ teacher, onPress, isLoggedIn, isBoosted, showCompare }: TeacherCardProps) {
   const [videoModalVisible, setVideoModalVisible] = useState(false);
+  const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const { profile, categories, tags, modes, locations } = teacher;
+  const inCompare = isInCompare(teacher.profile_id);
 
   const hasOnline = modes.some((m) => m.mode === 'online');
   const hasFaceToFace = modes.some((m) => m.mode === 'face_to_face');
@@ -40,10 +46,41 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, isBoosted && styles.cardBoosted]}
       onPress={onPress}
       activeOpacity={0.7}
     >
+      {/* Boost Badge */}
+      {isBoosted && (
+        <View style={styles.boostBadge}>
+          <Ionicons name="rocket" size={12} color={Colors.textOnDark} />
+          <Text style={styles.boostBadgeText}>Öne Çıkan</Text>
+        </View>
+      )}
+
+      {/* Compare Checkbox */}
+      {showCompare && (
+        <TouchableOpacity
+          style={styles.compareCheck}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            if (inCompare) {
+              removeFromCompare(teacher.profile_id);
+            } else {
+              addToCompare(teacher);
+            }
+          }}
+          hitSlop={8}
+          activeOpacity={0.6}
+        >
+          <Ionicons
+            name={inCompare ? 'checkbox' : 'square-outline'}
+            size={22}
+            color={inCompare ? Colors.navy : Colors.textTertiary}
+          />
+        </TouchableOpacity>
+      )}
+
       {/* Header Row */}
       <View style={styles.header}>
         {profile?.avatar_url ? (
@@ -77,6 +114,14 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn }: TeacherCar
           <Text style={styles.rate}>
             {formatPrice(teacher.hourly_rate)} / saat
           </Text>
+          {teacher.avg_rating > 0 && (
+            <View style={styles.ratingRow}>
+              <StarRating rating={teacher.avg_rating} size={13} />
+              <Text style={styles.ratingText}>
+                {teacher.avg_rating.toFixed(1)} ({teacher.review_count})
+              </Text>
+            </View>
+          )}
         </View>
 
       </View>
@@ -184,6 +229,35 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  cardBoosted: {
+    borderColor: Colors.orange,
+    borderWidth: 1.5,
+  },
+  boostBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.orange,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+    zIndex: 1,
+  },
+  boostBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.textOnDark,
+  },
+  compareCheck: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -237,6 +311,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.orange,
     marginTop: 2,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   bio: {
     fontSize: 14,

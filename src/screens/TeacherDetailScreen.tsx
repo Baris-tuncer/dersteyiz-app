@@ -14,11 +14,18 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { fetchTeacher, logView, logContact } from '../services/teacherService';
+import { canReview } from '../services/reviewService';
 import { formatPrice, getInitials, formatWhatsAppUrl } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
 import type { TeacherWithDetails } from '../types/teacher';
 import type { RootStackParamList } from '../types/navigation';
 import VideoPlayerModal from '../components/VideoPlayerModal';
+import StarRating from '../components/StarRating';
+import ReviewSection from '../components/ReviewSection';
+import ReviewForm from '../components/ReviewForm';
+import TrialRequestButton from '../components/TrialRequestButton';
+import DiplomaSection from '../components/DiplomaSection';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 
 type RouteProps = NativeStackScreenProps<RootStackParamList, 'TeacherDetail'>['route'];
 
@@ -28,10 +35,14 @@ export default function TeacherDetailScreen() {
   const { state } = useAuth();
   const { teacherId } = route.params;
 
+  const isParent = state.user?.user_metadata?.role === 'parent';
+
   const [teacher, setTeacher] = useState<TeacherWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [videoModalVisible, setVideoModalVisible] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +56,11 @@ export default function TeacherDetailScreen() {
             logView(teacherId, state.user?.id);
           }
         }
+        // Check if parent can review this teacher
+        if (isParent && state.user) {
+          const eligible = await canReview(teacherId, state.user.id);
+          if (!cancelled) setShowReviewForm(eligible);
+        }
       } catch {
         if (!cancelled) setError(true);
       } finally {
@@ -54,7 +70,7 @@ export default function TeacherDetailScreen() {
 
     load();
     return () => { cancelled = true; };
-  }, [teacherId]);
+  }, [teacherId, isParent, state.user]);
 
   if (loading) {
     return (
@@ -138,6 +154,15 @@ export default function TeacherDetailScreen() {
             <Text style={styles.universityText}>{teacher.university}</Text>
           </View>
         ) : null}
+
+        {teacher.avg_rating > 0 && (
+          <View style={styles.ratingContainer}>
+            <StarRating rating={teacher.avg_rating} size={18} />
+            <Text style={styles.ratingLabel}>
+              {teacher.avg_rating.toFixed(1)} ({teacher.review_count} yorum)
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Video Button */}
@@ -234,6 +259,22 @@ export default function TeacherDetailScreen() {
         </View>
       )}
 
+      {/* Diploma Section */}
+      {teacher.diploma_status === 'approved' && teacher.diploma_url && (
+        <DiplomaSection diplomaUrl={teacher.diploma_url} />
+      )}
+
+      {/* Availability Calendar */}
+      <AvailabilityCalendar teacherId={teacher.profile_id} />
+
+      {/* Trial Request Button */}
+      {isParent && state.user && (
+        <TrialRequestButton
+          teacherId={teacher.profile_id}
+          parentId={state.user.id}
+        />
+      )}
+
       {/* WhatsApp Button */}
       {state.user ? (
         <TouchableOpacity
@@ -264,6 +305,29 @@ export default function TeacherDetailScreen() {
         <Ionicons name="flag-outline" size={16} color={Colors.textTertiary} />
         <Text style={styles.reportText}>Şikâyet Et</Text>
       </TouchableOpacity>
+
+      {/* Reviews */}
+      <ReviewSection
+        key={`reviews-${refreshKey}`}
+        teacherId={teacher.profile_id}
+        avgRating={teacher.avg_rating}
+        reviewCount={teacher.review_count}
+      />
+
+      {/* Review Form (only for parents who contacted/had trial) */}
+      {showReviewForm && state.user && (
+        <ReviewForm
+          teacherId={teacher.profile_id}
+          reviewerId={state.user.id}
+          onReviewSubmitted={() => {
+            setShowReviewForm(false);
+            setRefreshKey((k) => k + 1);
+            fetchTeacher(teacherId).then((data) => {
+              if (data) setTeacher(data);
+            });
+          }}
+        />
+      )}
 
       {/* Video Player Modal */}
       {teacher.video_url && videoModalVisible && (
@@ -373,6 +437,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   videoButton: {
     flexDirection: 'row',

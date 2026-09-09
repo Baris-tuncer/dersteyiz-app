@@ -9,18 +9,24 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { fetchTeachers, fetchTeacher } from '../services/teacherService';
+import { fetchBoostedTeacherIds } from '../services/boostService';
+import { canBoost, createBoost } from '../services/boostService';
+import { getPendingTrialCount } from '../services/trialService';
 import { formatPrice, getInitials } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
+import { useCompare } from '../contexts/CompareContext';
 import type { TeacherWithDetails, TeacherFilters } from '../types/teacher';
 import type { RootStackParamList } from '../types/navigation';
 import TeacherCard from '../components/TeacherCard';
 import FilterBar from '../components/FilterBar';
+import RecommendationSection from '../components/RecommendationSection';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -32,6 +38,11 @@ const INITIAL_FILTERS: TeacherFilters = {
   city: '',
   tagIds: [],
   priceSort: '',
+  priceMin: null,
+  priceMax: null,
+  isVerified: false,
+  hasVideo: false,
+  minExperience: null,
 };
 
 function applyFilters(
@@ -76,6 +87,12 @@ function applyFilters(
       if (!hasAllTags) return false;
     }
 
+    if (filters.priceMin !== null && teacher.hourly_rate < filters.priceMin) return false;
+    if (filters.priceMax !== null && teacher.hourly_rate > filters.priceMax) return false;
+    if (filters.isVerified && !teacher.is_verified) return false;
+    if (filters.hasVideo && !teacher.video_url) return false;
+    if (filters.minExperience !== null && teacher.experience_years < filters.minExperience) return false;
+
     return true;
   });
 
@@ -92,8 +109,10 @@ function applyFilters(
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const { state: authState } = useAuth();
+  const { compareList } = useCompare();
   const isLoggedIn = !!authState.session;
   const isTeacher = authState.user?.user_metadata?.role === 'teacher';
+  const isParent = authState.user?.user_metadata?.role === 'parent';
   const userId = authState.user?.id;
 
   const [teachers, setTeachers] = useState<TeacherWithDetails[]>([]);
@@ -102,21 +121,36 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [boostedIds, setBoostedIds] = useState<string[]>([]);
+  const [boostAvailable, setBoostAvailable] = useState(false);
+  const [pendingTrials, setPendingTrials] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
       try {
-        const data = await fetchTeachers();
+        const [data, boosted] = await Promise.all([
+          fetchTeachers(),
+          fetchBoostedTeacherIds(),
+        ]);
         if (!cancelled) {
           setTeachers(data);
+          setBoostedIds(boosted);
           setError(false);
         }
         // Fetch own profile for teacher users
         if (isTeacher && userId) {
-          const me = await fetchTeacher(userId);
-          if (!cancelled && me) setMyProfile(me);
+          const [me, canB, trials] = await Promise.all([
+            fetchTeacher(userId),
+            canBoost(userId),
+            getPendingTrialCount(userId),
+          ]);
+          if (!cancelled) {
+            if (me) setMyProfile(me);
+            setBoostAvailable(canB);
+            setPendingTrials(trials);
+          }
         }
       } catch {
         if (!cancelled) setError(true);
@@ -132,21 +166,41 @@ export default function HomeScreen() {
   const filteredTeachers = useMemo(() => {
     const filtered = applyFilters(teachers, filters);
     // Exclude own card for teacher users
-    if (isTeacher && userId) {
-      return filtered.filter((t) => t.profile_id !== userId);
+    let result = isTeacher && userId
+      ? filtered.filter((t) => t.profile_id !== userId)
+      : filtered;
+
+    // Sort boosted teachers to top (only if no price sort active)
+    if (!filters.priceSort && boostedIds.length > 0) {
+      result = [...result].sort((a, b) => {
+        const aBoost = boostedIds.includes(a.profile_id) ? 1 : 0;
+        const bBoost = boostedIds.includes(b.profile_id) ? 1 : 0;
+        return bBoost - aBoost;
+      });
     }
-    return filtered;
-  }, [teachers, filters, isTeacher, userId]);
+
+    return result;
+  }, [teachers, filters, isTeacher, userId, boostedIds]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const data = await fetchTeachers();
+      const [data, boosted] = await Promise.all([
+        fetchTeachers(),
+        fetchBoostedTeacherIds(),
+      ]);
       setTeachers(data);
+      setBoostedIds(boosted);
       setError(false);
       if (isTeacher && userId) {
-        const me = await fetchTeacher(userId);
+        const [me, canB, trials] = await Promise.all([
+          fetchTeacher(userId),
+          canBoost(userId),
+          getPendingTrialCount(userId),
+        ]);
         if (me) setMyProfile(me);
+        setBoostAvailable(canB);
+        setPendingTrials(trials);
       }
     } catch {
       setError(true);
@@ -168,9 +222,11 @@ export default function HomeScreen() {
         teacher={item}
         onPress={() => handleTeacherPress(item)}
         isLoggedIn={isLoggedIn}
+        isBoosted={boostedIds.includes(item.profile_id)}
+        showCompare={isParent && filteredTeachers.length >= 2}
       />
     ),
-    [isLoggedIn, handleTeacherPress],
+    [isLoggedIn, handleTeacherPress, boostedIds, isParent, filteredTeachers.length],
   );
 
   const keyExtractor = useCallback(
@@ -223,14 +279,22 @@ export default function HomeScreen() {
     () => {
       if (isTeacher) return null;
       return (
-        <View style={styles.resultCountContainer}>
-          <Text style={styles.resultCount}>
-            {filteredTeachers.length} sonuç
-          </Text>
-        </View>
+        <>
+          {isLoggedIn && userId && (
+            <RecommendationSection
+              userId={userId}
+              onTeacherPress={(id) => navigation.navigate('TeacherDetail', { teacherId: id })}
+            />
+          )}
+          <View style={styles.resultCountContainer}>
+            <Text style={styles.resultCount}>
+              {filteredTeachers.length} sonuç
+            </Text>
+          </View>
+        </>
       );
     },
-    [isTeacher, filteredTeachers.length],
+    [isTeacher, filteredTeachers.length, isLoggedIn, userId, navigation],
   );
 
   return (
@@ -311,6 +375,53 @@ export default function HomeScreen() {
               </View>
             </View>
 
+            {/* Action Buttons */}
+            {myProfile.subscription_status && (
+              <View style={styles.dashboardActions}>
+                {boostAvailable && (
+                  <TouchableOpacity
+                    style={styles.boostButton}
+                    onPress={async () => {
+                      try {
+                        await createBoost(userId!);
+                        setBoostAvailable(false);
+                        Alert.alert('Profiliniz öne çıkarıldı!', '7 gün boyunca listenin üstünde görüneceksiniz.');
+                      } catch {
+                        Alert.alert('Hata', 'Boost yapılamadı.');
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="rocket-outline" size={16} color={Colors.textOnDark} />
+                    <Text style={styles.boostButtonText}>Öne Çıkar</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.analyticsButton}
+                  onPress={() => navigation.navigate('AnalyticsDashboard')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="analytics-outline" size={16} color={Colors.navy} />
+                  <Text style={styles.analyticsButtonText}>Detaylı Analiz</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Pending Trials */}
+            {pendingTrials > 0 && (
+              <TouchableOpacity
+                style={styles.trialBanner}
+                onPress={() => navigation.navigate('TrialRequests')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="calendar-outline" size={18} color={Colors.navy} />
+                <Text style={styles.trialBannerText}>
+                  {pendingTrials} bekleyen tanışma talebi
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+
             {/* Subscription Banner */}
             {!myProfile.subscription_status && (
               <View style={styles.subscriptionBanner}>
@@ -344,6 +455,20 @@ export default function HomeScreen() {
             />
           }
         />
+
+        {/* Compare FAB */}
+        {compareList.length >= 2 && (
+          <TouchableOpacity
+            style={styles.compareFab}
+            onPress={() => navigation.navigate('Compare')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="git-compare-outline" size={18} color={Colors.textOnDark} />
+            <Text style={styles.compareFabText}>
+              Karşılaştır ({compareList.length})
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -533,5 +658,80 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 12,
+  },
+  dashboardActions: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    gap: 10,
+  },
+  boostButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.orange,
+    borderRadius: 12,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  boostButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textOnDark,
+  },
+  analyticsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.navyLight,
+    borderRadius: 12,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  analyticsButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.navy,
+  },
+  trialBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.navyLight,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  trialBannerText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.navy,
+  },
+  compareFab: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.navy,
+    borderRadius: 100,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  compareFabText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textOnDark,
   },
 });

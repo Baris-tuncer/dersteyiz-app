@@ -27,4 +27,8 @@ export type RootStackParamList = {
   Terms: undefined;
   Privacy: undefined;
   Report: { teacherId: string };
+  AnalyticsDashboard: undefined;
+  Compare: undefined;
+  TrialRequests: undefined;
+  Reminders: undefined;
 };

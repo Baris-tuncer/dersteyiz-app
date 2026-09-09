@@ -23,6 +23,7 @@ import { supabase } from '../../config/supabase';
 import { getInitials } from '../../utils/formatters';
 import { CATEGORIES, MAJORS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import { TURKEY_CITIES } from '../../constants/cities';
+import AvailabilityEditor from '../../components/AvailabilityEditor';
 
 interface PickerModalProps {
   visible: boolean;
@@ -500,6 +501,13 @@ export default function EditProfileScreen() {
               <Ionicons name="chevron-down" size={18} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>
+
+          {/* Availability Calendar */}
+          {userId && (
+            <View style={styles.fieldGroup}>
+              <AvailabilityEditor teacherId={userId} />
+            </View>
+          )}
 
           {/* Diploma */}
           <View style={styles.fieldGroup}>

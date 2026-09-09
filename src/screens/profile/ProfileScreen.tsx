@@ -172,8 +172,24 @@ export default function ProfileScreen() {
       description: 'Kişisel bilgilerinizi güncelleyin',
       onPress: () => navigation.navigate('EditProfile'),
     },
-    ...(!isTeacher
+    ...(isTeacher
       ? [
+          {
+            iconLib: 'ionicons' as const,
+            iconName: 'analytics-outline' as IoniconsName,
+            label: 'Detaylı Analitik',
+            description: 'Görüntülenme ve iletişim analitiği',
+            onPress: () => navigation.navigate('AnalyticsDashboard'),
+          },
+          {
+            iconLib: 'ionicons' as const,
+            iconName: 'calendar-outline' as IoniconsName,
+            label: 'Tanışma Talepleri',
+            description: 'Gelen tanışma taleplerini yönetin',
+            onPress: () => navigation.navigate('TrialRequests'),
+          },
+        ]
+      : [
           {
             iconLib: 'ionicons' as const,
             iconName: 'heart-outline' as IoniconsName,
@@ -181,8 +197,14 @@ export default function ProfileScreen() {
             description: 'Kaydettiğiniz öğretmenleri görün',
             onPress: () => navigation.navigate('MainTabs', { screen: 'Favorites' }),
           },
-        ]
-      : []),
+        ]),
+    {
+      iconLib: 'ionicons',
+      iconName: 'alarm-outline',
+      label: 'Hatırlatıcılarım',
+      description: 'Kişisel hatırlatıcılarınızı yönetin',
+      onPress: () => navigation.navigate('Reminders'),
+    },
     {
       iconLib: 'ionicons',
       iconName: 'settings-outline',

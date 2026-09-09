@@ -61,6 +61,9 @@ export interface TeacherWithDetails {
   is_verified: boolean;
   view_count: number;
   contact_count: number;
+  avg_rating: number;
+  review_count: number;
+  experience_years: number;
   profile: Profile;
   modes: TeacherMode[];
   locations: TeacherLocation[];
@@ -76,4 +79,9 @@ export interface TeacherFilters {
   city: string;
   tagIds: number[];
   priceSort: 'asc' | 'desc' | ''; // '' = no sort, 'asc' = low to high, 'desc' = high to low
+  priceMin: number | null;
+  priceMax: number | null;
+  isVerified: boolean;
+  hasVideo: boolean;
+  minExperience: number | null;
 }

@@ -159,7 +159,11 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
     filters.modes.length > 0 ||
     filters.city !== '' ||
     filters.tagIds.length > 0 ||
-    filters.priceSort !== '';
+    filters.priceSort !== '' ||
+    filters.isVerified ||
+    filters.hasVideo ||
+    filters.priceMin !== null ||
+    filters.priceMax !== null;
 
   const handleSearchChange = useCallback(
     (text: string) => {
@@ -205,6 +209,11 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       city: '',
       tagIds: [],
       priceSort: '',
+      priceMin: null,
+      priceMax: null,
+      isVerified: false,
+      hasVideo: false,
+      minExperience: null,
     });
   }, [filters.search, onChange]);
 
@@ -255,6 +264,26 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
             </TouchableOpacity>
           );
         })}
+
+        {/* Toggle Chips */}
+        <TouchableOpacity
+          style={[styles.chip, filters.isVerified && styles.chipActive]}
+          onPress={() => onChange({ ...filters, isVerified: !filters.isVerified })}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.chipText, filters.isVerified && styles.chipTextActive]}>
+            Onaylı
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.chip, filters.hasVideo && styles.chipActive]}
+          onPress={() => onChange({ ...filters, hasVideo: !filters.hasVideo })}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.chipText, filters.hasVideo && styles.chipTextActive]}>
+            Videolu
+          </Text>
+        </TouchableOpacity>
 
         {hasAnyFilter && (
           <TouchableOpacity
