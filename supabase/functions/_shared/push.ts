@@ -6,6 +6,8 @@ interface PushMessage {
   to: string;
   title: string;
   body: string;
+  subtitle?: string;
+  channelId?: string;
   data?: Record<string, unknown>;
   sound?: string;
   badge?: number;

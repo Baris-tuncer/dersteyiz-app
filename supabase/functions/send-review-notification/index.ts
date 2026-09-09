@@ -45,7 +45,9 @@ serve(async (req) => {
         tokens.map((t) => ({
           to: t.token,
           title,
+          subtitle: 'Dersteyiz',
           body,
+          channelId: 'default',
           data: { type: 'new_review', reviewer_id },
           sound: 'default',
         })),

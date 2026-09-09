@@ -76,7 +76,9 @@ serve(async (req) => {
         tokens.map((t) => ({
           to: t.token,
           title,
+          subtitle: 'Dersteyiz',
           body,
+          channelId: 'default',
           data: { type: 'trial_request', request_id },
           sound: 'default',
         })),

@@ -25,8 +25,11 @@ serve(async (req) => {
 
     if (twoHourReminders) {
       for (const reminder of twoHourReminders) {
-        const title = '2 Saat Kaldı';
-        const body = reminder.title;
+        const title = reminder.title;
+        const body = reminder.note
+          ? `2 saat kaldı — ${reminder.note}`
+          : '2 saat kaldı';
+        const subtitle = 'Hatırlatıcı';
 
         await supabaseAdmin.from('notifications').insert({
           user_id: reminder.user_id,
@@ -45,7 +48,9 @@ serve(async (req) => {
             tokens.map((t) => ({
               to: t.token,
               title,
+              subtitle,
               body,
+              channelId: 'default',
               data: { type: 'reminder', reminder_id: reminder.id },
               sound: 'default',
             })),
@@ -71,8 +76,11 @@ serve(async (req) => {
 
     if (oneHourReminders) {
       for (const reminder of oneHourReminders) {
-        const title = '1 Saat Kaldı';
-        const body = reminder.title;
+        const title = reminder.title;
+        const body = reminder.note
+          ? `1 saat kaldı — ${reminder.note}`
+          : '1 saat kaldı';
+        const subtitle = 'Hatırlatıcı';
 
         await supabaseAdmin.from('notifications').insert({
           user_id: reminder.user_id,
@@ -91,7 +99,9 @@ serve(async (req) => {
             tokens.map((t) => ({
               to: t.token,
               title,
+              subtitle,
               body,
+              channelId: 'default',
               data: { type: 'reminder', reminder_id: reminder.id },
               sound: 'default',
             })),

@@ -20,7 +20,7 @@ export default function TrialRequestButton({ teacherId, parentId }: TrialRequest
         activeOpacity={0.8}
       >
         <Ionicons name="calendar-outline" size={20} color={Colors.navy} />
-        <Text style={styles.text}>15 dk Tanisma Talebi</Text>
+        <Text style={styles.text}>15 dk Tanışma Talebi</Text>
       </TouchableOpacity>
 
       <TrialRequestModal

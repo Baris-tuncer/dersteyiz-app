@@ -21,6 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/colors';
 
 const REMEMBER_KEY = 'dersteyiz_remember_email';
+const REMEMBER_PASS_KEY = 'dersteyiz_remember_pass';
 
 type AuthStackParamList = {
   Welcome: undefined;
@@ -42,10 +43,16 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(REMEMBER_KEY).then((saved) => {
-      if (saved) {
-        setEmail(saved);
+    Promise.all([
+      AsyncStorage.getItem(REMEMBER_KEY),
+      AsyncStorage.getItem(REMEMBER_PASS_KEY),
+    ]).then(([savedEmail, savedPass]) => {
+      if (savedEmail) {
+        setEmail(savedEmail);
         setRememberMe(true);
+      }
+      if (savedPass) {
+        setPassword(savedPass);
       }
     });
   }, []);
@@ -60,8 +67,10 @@ export default function LoginScreen() {
     try {
       if (rememberMe) {
         await AsyncStorage.setItem(REMEMBER_KEY, email.trim());
+        await AsyncStorage.setItem(REMEMBER_PASS_KEY, password);
       } else {
         await AsyncStorage.removeItem(REMEMBER_KEY);
+        await AsyncStorage.removeItem(REMEMBER_PASS_KEY);
       }
       await signIn(email.trim(), password);
     } catch (error: any) {

@@ -33,6 +33,7 @@ export default function AvailabilityCalendar({ teacherId }: AvailabilityCalendar
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Müsaitlik Takvimi</Text>
+      <Text style={styles.hint}>Aşağıdaki saatler, öğretmenin müsait olduğu zaman aralıklarını gösterir.</Text>
       <View style={styles.grid}>
         {[1, 2, 3, 4, 5, 6, 0].map((day) => {
           const daySlots = byDay[day] ?? [];
@@ -42,9 +43,9 @@ export default function AvailabilityCalendar({ teacherId }: AvailabilityCalendar
               {daySlots.length > 0 ? (
                 daySlots.map((s) => (
                   <View key={s.id} style={styles.slotBadge}>
-                    <Text style={styles.slotText}>
-                      {formatTime(s.start_time)}-{formatTime(s.end_time)}
-                    </Text>
+                    <Text style={styles.slotTime}>{formatTime(s.start_time)}</Text>
+                    <Text style={styles.slotDivider}>–</Text>
+                    <Text style={styles.slotTime}>{formatTime(s.end_time)}</Text>
                   </View>
                 ))
               ) : (
@@ -67,6 +68,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textPrimary,
+    marginBottom: 4,
+  },
+  hint: {
+    fontSize: 12,
+    color: Colors.textSecondary,
     marginBottom: 12,
   },
   grid: {
@@ -88,12 +94,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navyLight,
     borderRadius: 6,
     paddingHorizontal: 4,
-    paddingVertical: 3,
+    paddingVertical: 4,
+    alignItems: 'center',
   },
-  slotText: {
+  slotTime: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.navy,
+  },
+  slotDivider: {
+    fontSize: 8,
+    color: Colors.textTertiary,
+    lineHeight: 10,
   },
   emptySlot: {
     fontSize: 12,

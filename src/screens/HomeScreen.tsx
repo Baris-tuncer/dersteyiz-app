@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -162,6 +162,15 @@ export default function HomeScreen() {
     init();
     return () => { cancelled = true; };
   }, [isTeacher, userId]);
+
+  // Refresh pending trial count when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (isTeacher && userId) {
+        getPendingTrialCount(userId).then(setPendingTrials).catch(() => {});
+      }
+    }, [isTeacher, userId]),
+  );
 
   const filteredTeachers = useMemo(() => {
     const filtered = applyFilters(teachers, filters);
