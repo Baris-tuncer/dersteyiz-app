@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,40 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  getNotificationPreferences,
+  setNotificationPreferences,
+} from '../../services/notificationService';
 
 export default function SettingsScreen() {
+  const { state } = useAuth();
+  const userId = state.user?.id;
+
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    getNotificationPreferences(userId).then((prefs) => {
+      setPushEnabled(prefs.push_enabled);
+      setEmailEnabled(prefs.email_enabled);
+    });
+  }, [userId]);
+
+  const handlePushToggle = async (value: boolean) => {
+    setPushEnabled(value);
+    if (userId) {
+      await setNotificationPreferences(userId, { push_enabled: value });
+    }
+  };
+
+  const handleEmailToggle = async (value: boolean) => {
+    setEmailEnabled(value);
+    if (userId) {
+      await setNotificationPreferences(userId, { email_enabled: value });
+    }
+  };
 
   return (
     <ScrollView
@@ -31,7 +61,7 @@ export default function SettingsScreen() {
           </View>
           <Switch
             value={pushEnabled}
-            onValueChange={setPushEnabled}
+            onValueChange={handlePushToggle}
             trackColor={{ false: Colors.borderDark, true: Colors.navy }}
             thumbColor={Colors.surface}
             ios_backgroundColor={Colors.borderDark}
@@ -47,7 +77,7 @@ export default function SettingsScreen() {
           </View>
           <Switch
             value={emailEnabled}
-            onValueChange={setEmailEnabled}
+            onValueChange={handleEmailToggle}
             trackColor={{ false: Colors.borderDark, true: Colors.navy }}
             thumbColor={Colors.surface}
             ios_backgroundColor={Colors.borderDark}

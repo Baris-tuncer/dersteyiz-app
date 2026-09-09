@@ -19,5 +19,18 @@
       "channel": "production",
       "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "/Users/baristuncer/Downloads/AuthKey_86747J4623.p8",
+        "ascApiKeyId": "86747J4623",
+        "ascApiKeyIssuerId": "37d444a2-6c57-4737-ac4d-83019c318fc0"
+      },
+      "android": {
+        "serviceAccountKeyPath": "/Users/baristuncer/Desktop/candostum/google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

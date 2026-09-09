@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import { useNotifications } from '../contexts/NotificationContext';
 import type { MainTabParamList } from '../types/navigation';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -12,6 +13,8 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabs() {
+  const { unreadCount } = useNotifications();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -55,6 +58,8 @@ export default function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profil',
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: Colors.orange, fontSize: 10 },
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? 'person' : 'person-outline'}

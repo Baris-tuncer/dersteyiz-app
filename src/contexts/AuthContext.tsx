@@ -45,6 +45,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   completeProfile: () => void;
 }
 
@@ -135,6 +136,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    const userId = state.user?.id;
+    if (!userId) throw new Error('Kullanıcı bulunamadı');
+
+    // Storage'dan dosyaları sil (hata olsa da devam et)
+    const buckets = ['avatars', 'videos', 'diplomas'];
+    for (const bucket of buckets) {
+      try {
+        const { data: files } = await supabase.storage.from(bucket).list(userId);
+        if (files && files.length > 0) {
+          const paths = files.map((f) => `${userId}/${f.name}`);
+          await supabase.storage.from(bucket).remove(paths);
+        }
+      } catch {
+        // Storage silme hatası hesap silmeyi engellememeli
+      }
+    }
+
+    // RPC ile hesabı sil (cascade ile tüm veriler silinir)
+    const { error } = await supabase.rpc('delete_own_account');
+    if (error) throw error;
+
+    dispatch({ type: 'SIGN_OUT' });
+  }, [state.user]);
+
   const completeProfile = useCallback(() => {
     dispatch({ type: 'PROFILE_COMPLETE' });
   }, []);
@@ -145,8 +171,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    deleteAccount,
     completeProfile,
-  }), [state, signUp, signIn, signOut, resetPassword, completeProfile]);
+  }), [state, signUp, signIn, signOut, resetPassword, deleteAccount, completeProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

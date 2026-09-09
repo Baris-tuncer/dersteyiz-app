@@ -120,7 +120,7 @@ export default function TermsScreen() {
 
       <Text style={styles.heading}>11. İletişim</Text>
       <Text style={styles.paragraph}>
-        Kullanım koşulları ile ilgili sorularınız için destek@dersteyiz.com adresinden bize ulaşabilirsiniz.
+        Kullanım koşulları ile ilgili sorularınız için destek@dersteyiz.net adresinden bize ulaşabilirsiniz.
       </Text>
 
       <Text style={styles.footer}>

@@ -13,6 +13,7 @@ import TeacherDetailScreen from '../screens/TeacherDetailScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import AdminPanelScreen from '../screens/profile/AdminPanelScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import KVKKScreen from '../screens/legal/KVKKScreen';
 import TermsScreen from '../screens/legal/TermsScreen';
@@ -82,6 +83,11 @@ export default function RootNavigator() {
         name="AdminPanel"
         component={AdminPanelScreen}
         options={{ title: 'Yönetim Paneli' }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: 'Bildirimler' }}
       />
       <Stack.Screen
         name="Paywall"

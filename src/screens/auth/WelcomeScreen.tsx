@@ -2,6 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -28,10 +29,11 @@ export default function WelcomeScreen() {
 
       {/* Logo Area */}
       <View style={styles.logoArea}>
-        <Text style={styles.logoText}>
-          <Text style={styles.logoNavy}>Derste</Text>
-          <Text style={styles.logoOrange}>yiz</Text>
-        </Text>
+        <Image
+          source={require('../../../assets/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.tagline}>
           {'Öğrenmenin en doğru adresi'}
         </Text>
@@ -71,16 +73,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  logoText: {
-    fontSize: 42,
-    fontWeight: '800',
+  logo: {
+    width: 220,
+    height: 220,
     marginBottom: 16,
-  },
-  logoNavy: {
-    color: Colors.navy,
-  },
-  logoOrange: {
-    color: Colors.orange,
   },
   tagline: {
     fontSize: 18,

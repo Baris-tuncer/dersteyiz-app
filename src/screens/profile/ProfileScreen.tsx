@@ -9,11 +9,13 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { supabase } from '../../config/supabase';
 import { getInitials, formatWhatsAppUrl } from '../../utils/formatters';
 
@@ -69,7 +71,9 @@ function MenuRow({ item }: { item: MenuItem }) {
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { state, signOut } = useAuth();
+  const { state, signOut, deleteAccount } = useAuth();
+  const { unreadCount } = useNotifications();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const userName = state.user?.user_metadata?.full_name ?? 'Kullanıcı';
   const userEmail = state.user?.email ?? '';
@@ -78,18 +82,20 @@ export default function ProfileScreen() {
 
   const [stats, setStats] = useState({ view_count: 0, contact_count: 0, is_verified: false, subscription_status: false });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Load avatar
+  // Load avatar and admin status
   useFocusEffect(
     useCallback(() => {
       if (!userId) return;
       supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, is_admin')
         .eq('id', userId)
         .single()
         .then(({ data }) => {
           if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+          if (data?.is_admin) setIsAdmin(true);
         });
     }, [userId]),
   );
@@ -132,8 +138,14 @@ export default function ProfileScreen() {
         {
           text: 'Evet, Hesabımı Sil',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Bilgi', 'Hesap silme talebi alınmıştır.');
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await deleteAccount();
+            } catch {
+              setIsDeleting(false);
+              Alert.alert('Hata', 'Hesap silinirken bir sorun oluştu. Lütfen tekrar deneyin.');
+            }
           },
         },
       ],
@@ -141,11 +153,18 @@ export default function ProfileScreen() {
   };
 
   const handleWhatsAppSupport = () => {
-    const url = formatWhatsAppUrl('5300000000', 'Merhaba, Dersteyiz uygulaması hakkında destek almak istiyorum.');
+    const url = formatWhatsAppUrl('5332951303', 'Merhaba, Dersteyiz uygulaması hakkında destek almak istiyorum.');
     Linking.openURL(url).catch(() => {});
   };
 
   const profileMenuItems: MenuItem[] = [
+    {
+      iconLib: 'ionicons',
+      iconName: 'notifications-outline',
+      label: unreadCount > 0 ? `Bildirimler (${unreadCount})` : 'Bildirimler',
+      description: 'Tüm bildirimlerinizi görüntüleyin',
+      onPress: () => navigation.navigate('Notifications'),
+    },
     {
       iconLib: 'ionicons',
       iconName: 'create-outline',
@@ -306,6 +325,22 @@ export default function ProfileScreen() {
           ))}
         </View>
 
+        {/* Admin Section */}
+        {isAdmin && (
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>YÖNETİM</Text>
+            <MenuRow
+              item={{
+                iconLib: 'ionicons',
+                iconName: 'shield-checkmark-outline',
+                label: 'Yönetim Paneli',
+                description: 'İstatistikler ve diploma onayları',
+                onPress: () => navigation.navigate('AdminPanel'),
+              }}
+            />
+          </View>
+        )}
+
         {/* Legal Section */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>YASAL</Text>
@@ -328,8 +363,13 @@ export default function ProfileScreen() {
           style={styles.deleteButton}
           onPress={handleDeleteAccount}
           activeOpacity={0.7}
+          disabled={isDeleting}
         >
-          <Text style={styles.deleteButtonText}>Hesabımı Sil</Text>
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={Colors.error} />
+          ) : (
+            <Text style={styles.deleteButtonText}>Hesabımı Sil</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.bottomSpacer} />

@@ -145,7 +145,7 @@ export default function PrivacyScreen() {
 
       <Text style={styles.heading}>10. İletişim</Text>
       <Text style={styles.paragraph}>
-        Gizlilik politikamız veya kişisel verilerinizle ilgili sorularınız için destek@dersteyiz.com adresinden bize ulaşabilirsiniz.
+        Gizlilik politikamız veya kişisel verilerinizle ilgili sorularınız için destek@dersteyiz.net adresinden bize ulaşabilirsiniz.
       </Text>
 
       <Text style={styles.footer}>

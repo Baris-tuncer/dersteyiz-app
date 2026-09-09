@@ -15,7 +15,13 @@
     "ios": {
       "bundleIdentifier": "com.dersteyiz.app",
       "buildNumber": "1",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Profil fotoğrafınızı çekmek için kamera erişimi gereklidir.",
+        "NSPhotoLibraryUsageDescription": "Profil fotoğrafı ve tanıtım videosu yüklemek için fotoğraf kütüphanesi erişimi gereklidir.",
+        "NSMicrophoneUsageDescription": "Tanıtım videonuzun sesini kaydetmek için mikrofon erişimi gereklidir."
+      }
     },
     "android": {
       "package": "com.dersteyiz.app",
@@ -39,7 +45,14 @@
     "plugins": [
       "expo-secure-store",
       "expo-localization",
-      "expo-video"
+      "expo-video",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#1B3A5C"
+        }
+      ]
     ],
     "owner": "baris_tuncer80"
   }

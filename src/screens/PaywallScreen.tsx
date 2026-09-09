@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import { MONTHLY_PRICE, FREE_TRIAL_DAYS } from '../constants/subscription';
 
 const FEATURES = [
   'Profiliniz vitrine çıkar',
@@ -21,21 +23,27 @@ const FEATURES = [
 
 export default function PaywallScreen() {
   const navigation = useNavigation<any>();
+  const { state, purchaseSubscription, restorePurchases } = useSubscription();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = () => {
-    Alert.alert(
-      'Abonelik',
-      'Abonelik işlemi yakında aktif olacaktır.',
-      [{ text: 'Tamam' }],
-    );
+  const displayPrice = state.productPrice || MONTHLY_PRICE;
+
+  const handleSubscribe = async () => {
+    setLoading(true);
+    try {
+      await purchaseSubscription();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRestore = () => {
-    Alert.alert(
-      'Geri Yükleme',
-      'Satın alım geri yükleme işlemi başlatıldı.',
-      [{ text: 'Tamam' }],
-    );
+  const handleRestore = async () => {
+    setLoading(true);
+    try {
+      await restorePurchases();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,6 +61,17 @@ export default function PaywallScreen() {
         </Text>
       </View>
 
+      {/* Trial Banner */}
+      <View style={styles.trialBanner}>
+        <Ionicons name="gift-outline" size={22} color={Colors.navy} />
+        <View style={styles.trialTextContainer}>
+          <Text style={styles.trialTitle}>İlk {FREE_TRIAL_DAYS} gün ücretsiz!</Text>
+          <Text style={styles.trialSubtitle}>
+            Deneme süresi boyunca herhangi bir ücret alınmaz.
+          </Text>
+        </View>
+      </View>
+
       {/* Features */}
       <View style={styles.featuresCard}>
         {FEATURES.map((feature, index) => (
@@ -67,21 +86,26 @@ export default function PaywallScreen() {
       <View style={styles.priceCard}>
         <Text style={styles.priceLabel}>Aylık Abonelik</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.priceAmount}>₺399</Text>
+          <Text style={styles.priceAmount}>{displayPrice}</Text>
           <Text style={styles.pricePeriod}>/ay</Text>
         </View>
         <Text style={styles.priceNote}>
-          İstediğiniz zaman iptal edebilirsiniz.
+          {FREE_TRIAL_DAYS} günlük ücretsiz deneme sonrası
         </Text>
       </View>
 
       {/* Subscribe Button */}
       <TouchableOpacity
-        style={styles.subscribeButton}
+        style={[styles.subscribeButton, loading && styles.subscribeButtonDisabled]}
         onPress={handleSubscribe}
         activeOpacity={0.8}
+        disabled={loading}
       >
-        <Text style={styles.subscribeButtonText}>Abone Ol</Text>
+        {loading ? (
+          <ActivityIndicator color={Colors.textOnDark} />
+        ) : (
+          <Text style={styles.subscribeButtonText}>Ücretsiz Denemeyi Başlat</Text>
+        )}
       </TouchableOpacity>
 
       {/* Restore */}
@@ -89,17 +113,33 @@ export default function PaywallScreen() {
         style={styles.restoreButton}
         onPress={handleRestore}
         activeOpacity={0.7}
+        disabled={loading}
       >
         <Text style={styles.restoreButtonText}>Satın Alımı Geri Yükle</Text>
       </TouchableOpacity>
 
+      {/* Auto-renewal Disclosure (Apple zorunlu) */}
+      <Text style={styles.disclosure}>
+        Abonelik otomatik olarak yenilenir. Ödeme Apple ID hesabınızdan tahsil
+        edilir. {FREE_TRIAL_DAYS} günlük ücretsiz deneme süresi bitmeden en az 24
+        saat önce iptal edilmezse abonelik başlar. Aboneliğinizi istediğiniz zaman
+        Ayarlar {'>'} Abonelikler bölümünden iptal edebilirsiniz.
+      </Text>
+
       {/* Legal Links */}
       <View style={styles.legalContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Terms')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.legalLink}>Kullanım Koşulları</Text>
+        </TouchableOpacity>
+        <Text style={styles.legalDot}>{'\u00B7'}</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('KVKK')}
           activeOpacity={0.7}
         >
-          <Text style={styles.legalLink}>KVKK Aydınlatma Metni</Text>
+          <Text style={styles.legalLink}>KVKK</Text>
         </TouchableOpacity>
         <Text style={styles.legalDot}>{'\u00B7'}</Text>
         <TouchableOpacity
@@ -145,6 +185,30 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  trialBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.navyLight,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  trialTextContainer: {
+    flex: 1,
+  },
+  trialTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.navy,
+    marginBottom: 2,
+  },
+  trialSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
   },
   featuresCard: {
     backgroundColor: Colors.surface,
@@ -214,6 +278,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  subscribeButtonDisabled: {
+    opacity: 0.7,
+  },
   subscribeButtonText: {
     fontSize: 17,
     fontWeight: '700',
@@ -222,7 +289,15 @@ const styles = StyleSheet.create({
   restoreButton: {
     alignItems: 'center',
     paddingVertical: 12,
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  disclosure: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   restoreButtonText: {
     fontSize: 15,

@@ -112,7 +112,7 @@ export default function KVKKScreen() {
 
       <Text style={styles.heading}>7. İletişim</Text>
       <Text style={styles.paragraph}>
-        Yukarıda belirtilen haklarınıza ilişkin taleplerinizi destek@dersteyiz.com adresine e-posta göndererek veya uygulama içi destek hattı üzerinden iletebilirsiniz.
+        Yukarıda belirtilen haklarınıza ilişkin taleplerinizi destek@dersteyiz.net adresine e-posta göndererek veya uygulama içi destek hattı üzerinden iletebilirsiniz.
       </Text>
 
       <Text style={styles.footer}>
