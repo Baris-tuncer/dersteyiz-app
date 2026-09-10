@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
   FlatList,
+  SectionList,
   TextInput,
   StyleSheet,
   Pressable,
@@ -17,6 +18,11 @@ interface FilterOption {
   value: string | number;
 }
 
+interface FilterGroup {
+  title: string;
+  items: FilterOption[];
+}
+
 interface FilterModalProps {
   visible: boolean;
   title: string;
@@ -24,6 +30,8 @@ interface FilterModalProps {
   selectedValues: (string | number)[];
   multiSelect?: boolean;
   showCustomInput?: boolean;
+  searchable?: boolean;
+  groups?: FilterGroup[];
   onSelectMulti: (values: (string | number)[]) => void;
   onClose: () => void;
 }
@@ -35,12 +43,15 @@ export default function FilterModal({
   selectedValues,
   multiSelect = false,
   showCustomInput = false,
+  searchable = false,
+  groups,
   onSelectMulti,
   onClose,
 }: FilterModalProps) {
   const [localSelection, setLocalSelection] = useState<(string | number)[]>(selectedValues);
   const [customText, setCustomText] = useState('');
   const [customOptions, setCustomOptions] = useState<FilterOption[]>([]);
+  const [searchText, setSearchText] = useState('');
 
   const handleToggle = (value: string | number) => {
     if (multiSelect) {
@@ -69,14 +80,12 @@ export default function FilterModal({
   const handleAddCustom = () => {
     const trimmed = customText.trim();
     if (!trimmed) return;
-    // Check if already exists in options or custom options
     const allOpts = [...options, ...customOptions];
     const exists = allOpts.some((o) => o.label.toLowerCase() === trimmed.toLowerCase());
     if (exists) {
       setCustomText('');
       return;
     }
-    // Create a negative ID to distinguish from real tags
     const newId = -(customOptions.length + 1);
     const newOption: FilterOption = { label: trimmed, value: newId };
     setCustomOptions((prev) => [...prev, newOption]);
@@ -93,6 +102,97 @@ export default function FilterModal({
   };
 
   const selectionCount = multiSelect ? localSelection.length : 0;
+
+  // Search filtering
+  const query = searchText.toLowerCase();
+  const isSearching = searchable && searchText.length >= 3;
+
+  const filteredOptions = useMemo(() => {
+    if (!isSearching) return allOptions;
+    return allOptions.filter((o) => o.label.toLowerCase().includes(query));
+  }, [allOptions, isSearching, query]);
+
+  const filteredGroups = useMemo(() => {
+    if (!groups) return undefined;
+    const source = groups;
+    if (!isSearching) return source;
+    return source
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((item) => item.label.toLowerCase().includes(query)),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [groups, isSearching, query]);
+
+  // SectionList data format
+  const sections = useMemo(() => {
+    if (!filteredGroups) return [];
+    return filteredGroups.map((g) => ({
+      title: g.title,
+      data: g.items,
+    }));
+  }, [filteredGroups]);
+
+  const renderOption = (item: FilterOption) => (
+    <TouchableOpacity
+      style={[
+        styles.optionRow,
+        isSelected(item.value) && styles.optionRowSelected,
+      ]}
+      onPress={() => handleToggle(item.value)}
+      activeOpacity={0.6}
+    >
+      {multiSelect && (
+        <View style={[styles.checkbox, isSelected(item.value) && styles.checkboxActive]}>
+          {isSelected(item.value) && (
+            <Ionicons name="checkmark" size={14} color={Colors.textOnDark} />
+          )}
+        </View>
+      )}
+      <Text
+        style={[
+          styles.optionText,
+          isSelected(item.value) && styles.optionTextSelected,
+        ]}
+      >
+        {item.label}
+      </Text>
+      {!multiSelect && isSelected(item.value) && (
+        <Ionicons name="checkmark" size={20} color={Colors.navy} style={styles.singleCheck} />
+      )}
+    </TouchableOpacity>
+  );
+
+  const customFooter = showCustomInput ? (
+    <View style={styles.customInputContainer}>
+      <View style={styles.customInputDivider} />
+      <Text style={styles.customInputLabel}>Kendiniz ekleyin</Text>
+      <View style={styles.customInputRow}>
+        <TextInput
+          style={styles.customInput}
+          placeholder="Etiket yazın..."
+          placeholderTextColor={Colors.textTertiary}
+          value={customText}
+          onChangeText={setCustomText}
+          returnKeyType="done"
+          onSubmitEditing={handleAddCustom}
+        />
+        <TouchableOpacity
+          style={[
+            styles.customAddButton,
+            !customText.trim() && styles.customAddButtonDisabled,
+          ]}
+          onPress={handleAddCustom}
+          disabled={!customText.trim()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add" size={20} color={Colors.textOnDark} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  ) : null;
+
+  const useGrouped = !!filteredGroups && filteredGroups.length > 0;
 
   return (
     <Modal
@@ -124,75 +224,64 @@ export default function FilterModal({
             </View>
           )}
 
+          {/* Search */}
+          {searchable && (
+            <View style={styles.searchRow}>
+              <Ionicons name="search" size={16} color={Colors.textTertiary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Ara..."
+                placeholderTextColor={Colors.textTertiary}
+                value={searchText}
+                onChangeText={setSearchText}
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {searchText.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchText('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={16} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Options */}
-          <FlatList
-            data={allOptions}
-            keyExtractor={(item) => String(item.value)}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.optionRow,
-                  isSelected(item.value) && styles.optionRowSelected,
-                ]}
-                onPress={() => handleToggle(item.value)}
-                activeOpacity={0.6}
-              >
-                {multiSelect && (
-                  <View style={[styles.checkbox, isSelected(item.value) && styles.checkboxActive]}>
-                    {isSelected(item.value) && (
-                      <Ionicons name="checkmark" size={14} color={Colors.textOnDark} />
-                    )}
-                  </View>
-                )}
-                <Text
-                  style={[
-                    styles.optionText,
-                    isSelected(item.value) && styles.optionTextSelected,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-                {!multiSelect && isSelected(item.value) && (
-                  <Ionicons name="checkmark" size={20} color={Colors.navy} style={styles.singleCheck} />
-                )}
-              </TouchableOpacity>
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-            ListFooterComponent={
-              showCustomInput ? (
-                <View style={styles.customInputContainer}>
-                  <View style={styles.customInputDivider} />
-                  <Text style={styles.customInputLabel}>Kendiniz ekleyin</Text>
-                  <View style={styles.customInputRow}>
-                    <TextInput
-                      style={styles.customInput}
-                      placeholder="Etiket yazin..."
-                      placeholderTextColor={Colors.textTertiary}
-                      value={customText}
-                      onChangeText={setCustomText}
-                      returnKeyType="done"
-                      onSubmitEditing={handleAddCustom}
-                    />
-                    <TouchableOpacity
-                      style={[
-                        styles.customAddButton,
-                        !customText.trim() && styles.customAddButtonDisabled,
-                      ]}
-                      onPress={handleAddCustom}
-                      disabled={!customText.trim()}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="add" size={20} color={Colors.textOnDark} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : null
-            }
-          />
+          {/* Options — grouped or flat */}
+          {useGrouped ? (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => String(item.value)}
+              renderSectionHeader={({ section }) => (
+                <Text style={styles.sectionHeader}>{section.title}</Text>
+              )}
+              renderItem={({ item }) => renderOption(item)}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+              stickySectionHeadersEnabled={false}
+              ListEmptyComponent={
+                isSearching ? (
+                  <Text style={styles.emptyText}>Sonuç bulunamadı</Text>
+                ) : null
+              }
+              ListFooterComponent={customFooter}
+            />
+          ) : (
+            <FlatList
+              data={filteredOptions}
+              keyExtractor={(item) => String(item.value)}
+              renderItem={({ item }) => renderOption(item)}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                isSearching ? (
+                  <Text style={styles.emptyText}>Sonuç bulunamadı</Text>
+                ) : null
+              }
+              ListFooterComponent={customFooter}
+            />
+          )}
 
           {/* Apply button (multi-select only) */}
           {multiSelect && (
@@ -245,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingBottom: 8,
     gap: 6,
   },
   hintText: {
@@ -258,12 +347,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.error,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 8,
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 10,
+    height: 38,
+    gap: 6,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    paddingVertical: 0,
+  },
   divider: {
     height: 1,
     backgroundColor: Colors.border,
   },
   listContent: {
     paddingVertical: 8,
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   optionRow: {
     flexDirection: 'row',
@@ -300,6 +418,12 @@ const styles = StyleSheet.create({
   },
   singleCheck: {
     marginLeft: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: 24,
   },
   footer: {
     paddingHorizontal: 20,

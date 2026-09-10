@@ -15,36 +15,60 @@ export const CATEGORIES = [
   { id: 12, name: 'Enstrüman', group: 'special' },
 ] as const;
 
-export const MAJORS = [
-  'Matematik',
-  'Fizik',
-  'Kimya',
-  'Biyoloji',
-  'Türkçe',
-  'Edebiyat',
-  'Tarih',
-  'Coğrafya',
-  'Felsefe',
-  'İngilizce',
-  'Almanca',
-  'Fransızca',
-  'Geometri',
-  'Sınıf Öğretmenliği',
-  'Okul Öncesi Öğretmenliği',
-  'Özel Eğitim',
-  'Çocuk Gelişimi',
-  'Müzik',
-  'Resim',
-  'Beden Eğitimi',
-  'Pilates',
-  'Personal Training',
-  'Yoga',
-  'Piyano',
-  'Gitar',
-  'Keman',
-  'Bateri',
-  'Diğer',
-] as const;
+export interface MajorGroup {
+  title: string;
+  items: string[];
+}
+
+export const MAJOR_GROUPS: MajorGroup[] = [
+  {
+    title: 'Akademik Dersler',
+    items: [
+      'Matematik', 'Geometri', 'Fizik', 'Kimya', 'Biyoloji',
+      'Türkçe', 'Edebiyat', 'Tarih', 'Coğrafya', 'Felsefe',
+      'Hızlı Okuma',
+    ],
+  },
+  {
+    title: 'Sınav Hazırlık',
+    items: ['KPSS', 'DGS', 'YDS'],
+  },
+  {
+    title: 'Yabancı Dil',
+    items: ['İngilizce', 'Almanca', 'Fransızca', 'Arapça', 'İspanyolca', 'Rusça'],
+  },
+  {
+    title: 'Müzik & Enstrüman',
+    items: ['Müzik', 'Piyano', 'Gitar', 'Keman', 'Bateri', 'Bağlama / Saz', 'Ud', 'Flüt', 'Ney'],
+  },
+  {
+    title: 'Spor & Sağlık',
+    items: ['Beden Eğitimi', 'Pilates', 'Personal Training', 'Yoga', 'Dans'],
+  },
+  {
+    title: 'Sanat & Tasarım',
+    items: ['Resim', 'Grafik Tasarım', 'Fotoğrafçılık'],
+  },
+  {
+    title: 'Teknoloji',
+    items: ['Yazılım / Kodlama', 'Dijital Pazarlama'],
+  },
+  {
+    title: 'Çocuk & Özel Eğitim',
+    items: ['Sınıf Öğretmenliği', 'Okul Öncesi Öğretmenliği', 'Özel Eğitim', 'Çocuk Gelişimi'],
+  },
+  {
+    title: 'Kişisel Gelişim & Hobi',
+    items: ['Astroloji', 'Diksiyon', 'Satranç', 'Drama / Tiyatro', 'Direksiyon Dersi'],
+  },
+  {
+    title: 'Diğer',
+    items: ['Diğer'],
+  },
+];
+
+// Düz liste — geriye uyumluluk için
+export const MAJORS: readonly string[] = MAJOR_GROUPS.flatMap((g) => g.items);
 
 // Etiketler kategori grubuna göre filtrelenir
 // 'academic' → akademik kategoriler (ids 1-7) + Okul Öncesi (8) + Özel Eğitim (9)

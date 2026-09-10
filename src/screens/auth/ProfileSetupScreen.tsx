@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
-import { CATEGORIES, MAJORS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
+import { CATEGORIES, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import { TURKEY_CITIES } from '../../constants/cities';
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -41,6 +41,7 @@ export default function ProfileSetupScreen() {
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
   const [offersTrial, setOffersTrial] = useState<boolean | null>(null);
+  const [majorSearch, setMajorSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Picker modals
@@ -428,28 +429,70 @@ export default function ProfileSetupScreen() {
           {/* Major Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Branş (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
-            <View style={styles.checkboxGrid}>
-              {MAJORS.map((major) => (
-                <TouchableOpacity
-                  key={major}
-                  style={styles.checkboxRow}
-                  onPress={() => toggleMajor(major)}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      selectedMajors.includes(major) && styles.checkboxActive,
-                    ]}
-                  >
-                    {selectedMajors.includes(major) && (
-                      <Ionicons name="checkmark" size={16} color={Colors.textOnDark} />
-                    )}
-                  </View>
-                  <Text style={styles.checkboxLabel}>{major}</Text>
+            {selectedMajors.length > 0 && (
+              <Text style={styles.selectedCount}>{selectedMajors.length} branş seçildi</Text>
+            )}
+            <View style={styles.majorSearchRow}>
+              <Ionicons name="search" size={16} color={Colors.textTertiary} />
+              <TextInput
+                style={styles.majorSearchInput}
+                placeholder="Branş ara..."
+                placeholderTextColor={Colors.textTertiary}
+                value={majorSearch}
+                onChangeText={setMajorSearch}
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {majorSearch.length > 0 && (
+                <TouchableOpacity onPress={() => setMajorSearch('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={16} color={Colors.textTertiary} />
                 </TouchableOpacity>
-              ))}
+              )}
             </View>
+            {(() => {
+              const query = majorSearch.toLowerCase();
+              const isSearching = majorSearch.length >= 3;
+              const filtered = MAJOR_GROUPS
+                .map((g) => ({
+                  ...g,
+                  items: isSearching
+                    ? g.items.filter((m) => m.toLowerCase().includes(query))
+                    : g.items,
+                }))
+                .filter((g) => g.items.length > 0);
+
+              if (isSearching && filtered.length === 0) {
+                return <Text style={styles.majorNoResult}>Sonuç bulunamadı</Text>;
+              }
+
+              return filtered.map((group) => (
+                <View key={group.title} style={styles.majorGroup}>
+                  <Text style={styles.majorGroupTitle}>{group.title}</Text>
+                  <View style={styles.checkboxGrid}>
+                    {group.items.map((major) => (
+                      <TouchableOpacity
+                        key={major}
+                        style={styles.checkboxRow}
+                        onPress={() => toggleMajor(major)}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.checkbox,
+                            selectedMajors.includes(major) && styles.checkboxActive,
+                          ]}
+                        >
+                          {selectedMajors.includes(major) && (
+                            <Ionicons name="checkmark" size={16} color={Colors.textOnDark} />
+                          )}
+                        </View>
+                        <Text style={styles.checkboxLabel}>{major}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ));
+            })()}
           </View>
 
           {/* Hourly Rate */}
@@ -787,6 +830,47 @@ const styles = StyleSheet.create({
   pickerArrow: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  selectedCount: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.navy,
+    marginBottom: 8,
+  },
+  majorSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 10,
+    height: 38,
+    gap: 6,
+    marginBottom: 12,
+  },
+  majorSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    paddingVertical: 0,
+  },
+  majorGroup: {
+    marginBottom: 12,
+  },
+  majorGroupTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  majorNoResult: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: 16,
   },
   checkboxGrid: {
     gap: 10,

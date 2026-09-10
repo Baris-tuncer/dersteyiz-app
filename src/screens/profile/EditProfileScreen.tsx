@@ -22,7 +22,8 @@ import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
 import { getInitials } from '../../utils/formatters';
-import { CATEGORIES, MAJORS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
+import { CATEGORIES, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
+import FilterModal from '../../components/FilterModal';
 import { TURKEY_CITIES } from '../../constants/cities';
 import AvailabilityEditor from '../../components/AvailabilityEditor';
 
@@ -641,14 +642,18 @@ export default function EditProfileScreen() {
       <View style={styles.bottomSpacer} />
 
       {/* Modals */}
-      <PickerModal
+      <FilterModal
         visible={showMajorPicker}
-        onClose={() => setShowMajorPicker(false)}
         title="Branş Seçin"
-        data={MAJORS.map((m) => ({ id: m, label: m }))}
-        selected={major ? [major] : []}
-        onToggle={(id) => setMajor(major === String(id) ? '' : String(id))}
-        multi={false}
+        options={MAJORS.map((m) => ({ label: m, value: m }))}
+        groups={MAJOR_GROUPS.map((g) => ({
+          title: g.title,
+          items: g.items.map((m) => ({ label: m, value: m })),
+        }))}
+        selectedValues={major ? [major] : []}
+        searchable
+        onSelectMulti={(values) => setMajor(values[0] as string ?? '')}
+        onClose={() => setShowMajorPicker(false)}
       />
       <PickerModal
         visible={showCategoryPicker}
