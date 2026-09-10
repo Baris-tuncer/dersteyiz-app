@@ -55,7 +55,14 @@ function applyFilters(
       const matchesName = teacher.profile?.full_name?.toLowerCase().includes(q);
       const matchesBio = teacher.bio?.toLowerCase().includes(q);
       const matchesMajor = teacher.major?.toLowerCase().includes(q);
-      if (!matchesName && !matchesBio && !matchesMajor) return false;
+      const matchesUniversity = teacher.university?.toLowerCase().includes(q);
+      const matchesCategory = teacher.categories?.some(
+        (c) => c.category?.name?.toLowerCase().includes(q),
+      );
+      const matchesTag = teacher.tags?.some(
+        (t) => t.tag?.name?.toLowerCase().includes(q),
+      );
+      if (!matchesName && !matchesBio && !matchesMajor && !matchesUniversity && !matchesCategory && !matchesTag) return false;
     }
 
     if (filters.categoryIds.length > 0) {
