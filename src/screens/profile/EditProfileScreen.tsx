@@ -572,9 +572,9 @@ export default function EditProfileScreen() {
 
           {/* Diploma */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Diploma</Text>
+            <Text style={styles.fieldLabel}>Mezun Belgesi / Sertifika</Text>
             <Text style={styles.diplomaNotice}>
-              Diplomanız yalnızca öğretmenlik yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
+              Mezun belgeniz veya sertifikanız yalnızca yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
             </Text>
             <TouchableOpacity
               style={styles.uploadButton}
@@ -597,21 +597,21 @@ export default function EditProfileScreen() {
                   if (uploadError) throw uploadError;
                   const { data } = supabase.storage.from('diplomas').getPublicUrl(filePath);
                   await supabase.from('teachers').update({ diploma_url: data.publicUrl, diploma_status: 'pending' }).eq('profile_id', userId);
-                  Alert.alert('Başarılı', 'Diplomanız yüklendi ve incelemeye gönderildi.');
+                  Alert.alert('Başarılı', 'Belgeniz yüklendi ve incelemeye gönderildi.');
                 } catch (err: any) {
-                  Alert.alert('Hata', err?.message || 'Diploma yüklenemedi.');
+                  Alert.alert('Hata', err?.message || 'Belge yüklenemedi.');
                 }
               }}
               activeOpacity={0.7}
             >
               <Ionicons name="attach" size={18} color={Colors.textSecondary} />
-              <Text style={styles.uploadText}>Diploma Yükle</Text>
+              <Text style={styles.uploadText}>Mezun Belgesi / Sertifika Yükle</Text>
             </TouchableOpacity>
             {diplomaApproved && (
               <View style={styles.diplomaToggle}>
                 <View style={styles.diplomaToggleText}>
-                  <Text style={styles.fieldLabel}>Diplomamı Velilere Göster</Text>
-                  <Text style={styles.fieldHint}>Açık olursa diplomanız profil detayınızda görünür.</Text>
+                  <Text style={styles.fieldLabel}>Belgemi Velilere Göster</Text>
+                  <Text style={styles.fieldHint}>Açık olursa belgeniz profil detayınızda görünür.</Text>
                 </View>
                 <Switch
                   value={showDiploma}

@@ -142,7 +142,7 @@ export default function AdminPanelScreen() {
 
       setPendingDiplomas(result as PendingDiploma[]);
     } catch (err: any) {
-      Alert.alert('Hata', err?.message || 'Diplomalar yüklenemedi.');
+      Alert.alert('Hata', err?.message || 'Belgeler yüklenemedi.');
     }
   }, []);
 
@@ -230,7 +230,7 @@ export default function AdminPanelScreen() {
 
       Alert.alert(
         'Başarılı',
-        action === 'approved' ? 'Diploma onaylandı.' : 'Diploma reddedildi.',
+        action === 'approved' ? 'Belge onaylandı.' : 'Belge reddedildi.',
       );
     } catch (err: any) {
       Alert.alert('Hata', err?.message || 'İşlem gerçekleştirilemedi.');
@@ -243,7 +243,7 @@ export default function AdminPanelScreen() {
     const label = action === 'approved' ? 'onaylamak' : 'reddetmek';
     Alert.alert(
       'Emin misiniz?',
-      `${teacherName} adlı öğretmenin diplomasını ${label} istediğinize emin misiniz?`,
+      `${teacherName} adlı öğretmenin belgesini ${label} istediğinize emin misiniz?`,
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -302,7 +302,7 @@ export default function AdminPanelScreen() {
         >
           <Ionicons name="document-text" size={16} color={activeTab === 'diplomas' ? Colors.textOnDark : Colors.navy} />
           <Text style={[styles.tabText, activeTab === 'diplomas' && styles.tabTextActive]}>
-            Diplomalar{pendingDiplomas.length > 0 ? ` (${pendingDiplomas.length})` : ''}
+            Belgeler{pendingDiplomas.length > 0 ? ` (${pendingDiplomas.length})` : ''}
           </Text>
         </TouchableOpacity>
       </View>
@@ -340,12 +340,12 @@ export default function AdminPanelScreen() {
             <View style={styles.statCard}>
               <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
               <Text style={styles.statValue}>{stats.verifiedTeachers}</Text>
-              <Text style={styles.statLabel}>Onaylı Diploma</Text>
+              <Text style={styles.statLabel}>Onaylı Belge</Text>
             </View>
             <View style={[styles.statCard, stats.pendingDiplomas > 0 && styles.statCardWarning]}>
               <Ionicons name="time" size={24} color={stats.pendingDiplomas > 0 ? Colors.orange : Colors.textTertiary} />
               <Text style={styles.statValue}>{stats.pendingDiplomas}</Text>
-              <Text style={styles.statLabel}>Bekleyen Diploma</Text>
+              <Text style={styles.statLabel}>Bekleyen Belge</Text>
             </View>
           </View>
 
@@ -447,9 +447,9 @@ export default function AdminPanelScreen() {
       {activeTab === 'diplomas' && (
         <View>
           <View style={styles.headerSection}>
-            <Text style={styles.title}>Diploma Onay Paneli</Text>
+            <Text style={styles.title}>Belge Onay Paneli</Text>
             <Text style={styles.subtitle}>
-              Öğretmenlerin yüklediği diplomaları inceleyip onaylayın veya reddedin.
+              Öğretmenlerin yüklediği mezun belgesi ve sertifikaları inceleyip onaylayın veya reddedin.
             </Text>
           </View>
 
@@ -457,10 +457,10 @@ export default function AdminPanelScreen() {
             <View style={styles.emptyContainer}>
               <Ionicons name="checkmark-circle" size={56} color={Colors.success} />
               <Text style={styles.emptyTitle}>
-                Onay bekleyen diploma yok.
+                Onay bekleyen belge yok.
               </Text>
               <Text style={styles.emptySubtitle}>
-                Yeni diploma yüklendiğinde burada görüntülenecektir.
+                Yeni belge yüklendiğinde burada görüntülenecektir.
               </Text>
             </View>
           ) : (

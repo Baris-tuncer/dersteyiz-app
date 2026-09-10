@@ -25,7 +25,7 @@ export default function DiplomaSection({ diplomaUrl }: DiplomaSectionProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <MaterialIcons name="verified" size={20} color={Colors.navy} />
-        <Text style={styles.title}>Onaylı Diploma</Text>
+        <Text style={styles.title}>Onaylı Mezun Belgesi / Sertifika</Text>
       </View>
 
       <TouchableOpacity

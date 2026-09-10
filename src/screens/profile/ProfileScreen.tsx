@@ -322,7 +322,7 @@ export default function ProfileScreen() {
                 <Text style={[styles.statNumber, { fontSize: 14 }]}>
                   {stats.is_verified ? 'Onaylı' : 'Bekliyor'}
                 </Text>
-                <Text style={styles.statLabel}>Diploma</Text>
+                <Text style={styles.statLabel}>Belge</Text>
               </View>
             </View>
             {!stats.subscription_status && (
@@ -361,7 +361,7 @@ export default function ProfileScreen() {
                 iconLib: 'ionicons',
                 iconName: 'shield-checkmark-outline',
                 label: 'Yönetim Paneli',
-                description: 'İstatistikler ve diploma onayları',
+                description: 'İstatistikler ve belge onayları',
                 onPress: () => navigation.navigate('AdminPanel'),
               }}
             />

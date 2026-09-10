@@ -382,7 +382,7 @@ export default function HomeScreen() {
                 <Text style={styles.statValue}>
                   {myProfile.is_verified ? 'Onaylı' : 'Bekliyor'}
                 </Text>
-                <Text style={styles.statLabel}>Diploma</Text>
+                <Text style={styles.statLabel}>Belge</Text>
               </View>
             </View>
 

@@ -705,10 +705,10 @@ export default function ProfileSetupScreen() {
           {/* Diploma Upload */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
-              Diploma / Mezuniyet Belgesi <Text style={styles.optionalBadge}>(Opsiyonel)</Text>
+              Mezun Belgesi / Sertifika <Text style={styles.optionalBadge}>(Opsiyonel)</Text>
             </Text>
             <Text style={styles.diplomaNotice}>
-              Diplomanız yalnızca öğretmenlik yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
+              Mezun belgeniz veya sertifikanız yalnızca yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
             </Text>
             <TouchableOpacity
               style={styles.uploadButton}
