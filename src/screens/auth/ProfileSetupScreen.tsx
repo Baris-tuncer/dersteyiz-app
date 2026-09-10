@@ -38,6 +38,7 @@ export default function ProfileSetupScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [diplomaUri, setDiplomaUri] = useState<string | null>(null);
+  const [diplomaType, setDiplomaType] = useState<'diploma' | 'certificate'>('diploma');
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
   const [offersTrial, setOffersTrial] = useState<boolean | null>(null);
@@ -243,6 +244,7 @@ export default function ProfileSetupScreen() {
         video_url: videoUrl,
         diploma_url: diplomaUrl,
         diploma_status: diplomaUrl ? 'pending' : 'pending',
+        diploma_type: diplomaType,
         offers_trial: offersTrial ?? false,
       });
 
@@ -710,6 +712,26 @@ export default function ProfileSetupScreen() {
             <Text style={styles.diplomaNotice}>
               Mezun belgeniz veya sertifikanız yalnızca yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
             </Text>
+            <View style={styles.diplomaTypeRow}>
+              <TouchableOpacity
+                style={[styles.diplomaTypeToggle, diplomaType === 'diploma' && styles.diplomaTypeToggleActive]}
+                onPress={() => setDiplomaType('diploma')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.diplomaTypeText, diplomaType === 'diploma' && styles.diplomaTypeTextActive]}>
+                  Mezun Belgesi
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.diplomaTypeToggle, diplomaType === 'certificate' && styles.diplomaTypeToggleActive]}
+                onPress={() => setDiplomaType('certificate')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.diplomaTypeText, diplomaType === 'certificate' && styles.diplomaTypeTextActive]}>
+                  Sertifika
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={async () => {
@@ -1066,6 +1088,32 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 19,
     marginBottom: 10,
+  },
+  diplomaTypeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  diplomaTypeToggle: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+  },
+  diplomaTypeToggleActive: {
+    borderColor: Colors.navy,
+    backgroundColor: Colors.navy,
+  },
+  diplomaTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  diplomaTypeTextActive: {
+    color: Colors.textOnDark,
   },
   uploadedRow: {
     flexDirection: 'row',

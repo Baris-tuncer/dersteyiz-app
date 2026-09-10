@@ -211,6 +211,7 @@ ALTER TABLE public.view_logs ADD COLUMN IF NOT EXISTS viewer_city text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS city text;
 ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS experience_years smallint NOT NULL DEFAULT 0;
 ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS offers_trial boolean NOT NULL DEFAULT false;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS diploma_type text NOT NULL DEFAULT 'diploma' CHECK (diploma_type IN ('diploma', 'certificate'));
 
 -- 7. Analytics RPC functions
 CREATE OR REPLACE FUNCTION public.get_view_hours(p_teacher_id uuid, p_since timestamptz)

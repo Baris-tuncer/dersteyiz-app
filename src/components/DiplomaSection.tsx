@@ -14,18 +14,21 @@ import { Colors } from '../constants/colors';
 
 interface DiplomaSectionProps {
   diplomaUrl: string;
+  diplomaType?: 'diploma' | 'certificate';
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export default function DiplomaSection({ diplomaUrl }: DiplomaSectionProps) {
+export default function DiplomaSection({ diplomaUrl, diplomaType = 'diploma' }: DiplomaSectionProps) {
   const [zoomVisible, setZoomVisible] = useState(false);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <MaterialIcons name="verified" size={20} color={Colors.navy} />
-        <Text style={styles.title}>Onaylı Mezun Belgesi / Sertifika</Text>
+        <Text style={styles.title}>
+          {diplomaType === 'certificate' ? 'Onaylı Sertifika' : 'Onaylı Diploma'}
+        </Text>
       </View>
 
       <TouchableOpacity

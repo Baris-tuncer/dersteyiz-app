@@ -111,6 +111,7 @@ export default function EditProfileScreen() {
   const [offersTrial, setOffersTrial] = useState<boolean | null>(null);
   const [showDiploma, setShowDiploma] = useState(false);
   const [diplomaApproved, setDiplomaApproved] = useState(false);
+  const [diplomaType, setDiplomaType] = useState<'diploma' | 'certificate'>('diploma');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -175,6 +176,7 @@ export default function EditProfileScreen() {
           setOffersTrial(teacher.offers_trial ?? false);
           setShowDiploma(teacher.show_diploma ?? false);
           setDiplomaApproved(teacher.diploma_status === 'approved');
+          setDiplomaType(teacher.diploma_type ?? 'diploma');
         }
       } catch {
         // fields will show empty defaults
@@ -288,6 +290,7 @@ export default function EditProfileScreen() {
             hourly_rate: parseInt(hourlyRate, 10) || 0,
             phone_number: phone.replace(/[^0-9]/g, ''),
             offers_trial: offersTrial ?? false,
+            diploma_type: diplomaType,
             show_diploma: showDiploma,
           })
           .eq('profile_id', userId);
@@ -576,6 +579,26 @@ export default function EditProfileScreen() {
             <Text style={styles.diplomaNotice}>
               Mezun belgeniz veya sertifikanız yalnızca yetkinliğinizi doğrulamak amacıyla talep edilmektedir. Belgeniz onaylandığında profilinizde "Onaylı Eğitmen" rozeti görünür ve velilerin size olan güveni artar. Yüklediğiniz belge, inceleme sürecinin ardından sunucularımızdan kalıcı olarak silinir ve hiçbir şekilde üçüncü taraflarla paylaşılmaz.
             </Text>
+            <View style={styles.diplomaTypeRow}>
+              <TouchableOpacity
+                style={[styles.diplomaTypeToggle, diplomaType === 'diploma' && styles.diplomaTypeToggleActive]}
+                onPress={() => setDiplomaType('diploma')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.diplomaTypeText, diplomaType === 'diploma' && styles.diplomaTypeToggleTextActive]}>
+                  Mezun Belgesi
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.diplomaTypeToggle, diplomaType === 'certificate' && styles.diplomaTypeToggleActive]}
+                onPress={() => setDiplomaType('certificate')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.diplomaTypeText, diplomaType === 'certificate' && styles.diplomaTypeToggleTextActive]}>
+                  Sertifika
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={async () => {
@@ -596,7 +619,7 @@ export default function EditProfileScreen() {
                   const { error: uploadError } = await supabase.storage.from('diplomas').upload(filePath, decode(base64), { contentType });
                   if (uploadError) throw uploadError;
                   const { data } = supabase.storage.from('diplomas').getPublicUrl(filePath);
-                  await supabase.from('teachers').update({ diploma_url: data.publicUrl, diploma_status: 'pending' }).eq('profile_id', userId);
+                  await supabase.from('teachers').update({ diploma_url: data.publicUrl, diploma_status: 'pending', diploma_type: diplomaType }).eq('profile_id', userId);
                   Alert.alert('Başarılı', 'Belgeniz yüklendi ve incelemeye gönderildi.');
                 } catch (err: any) {
                   Alert.alert('Hata', err?.message || 'Belge yüklenemedi.');
@@ -883,6 +906,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textSecondary,
+  },
+  diplomaTypeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  diplomaTypeToggle: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+  },
+  diplomaTypeToggleActive: {
+    borderColor: Colors.navy,
+    backgroundColor: Colors.navy,
+  },
+  diplomaTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  diplomaTypeToggleTextActive: {
+    color: Colors.textOnDark,
   },
   diplomaToggle: {
     flexDirection: 'row',

@@ -271,7 +271,7 @@ export default function TeacherDetailScreen() {
 
       {/* Diploma Section — only if teacher opted in */}
       {teacher.diploma_status === 'approved' && teacher.diploma_url && teacher.show_diploma && (
-        <DiplomaSection diplomaUrl={teacher.diploma_url} />
+        <DiplomaSection diplomaUrl={teacher.diploma_url} diplomaType={teacher.diploma_type} />
       )}
 
       {/* Availability Calendar */}

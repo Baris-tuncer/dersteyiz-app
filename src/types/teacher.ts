@@ -3,6 +3,7 @@ import type { Profile } from './auth';
 export type TeachingMode = 'online' | 'face_to_face';
 export type CategoryGroup = 'academic' | 'special';
 export type DiplomaStatus = 'pending' | 'approved' | 'rejected';
+export type DiplomaType = 'diploma' | 'certificate';
 
 export interface Teacher {
   profile_id: string;
@@ -15,6 +16,7 @@ export interface Teacher {
   video_url: string | null;
   diploma_url: string | null;
   diploma_status: DiplomaStatus;
+  diploma_type: DiplomaType;
   subscription_status: boolean;
   is_verified: boolean;
   view_count: number;
@@ -58,6 +60,7 @@ export interface TeacherWithDetails {
   video_url: string | null;
   diploma_url: string | null;
   diploma_status: DiplomaStatus;
+  diploma_type: DiplomaType;
   subscription_status: boolean;
   is_verified: boolean;
   view_count: number;
