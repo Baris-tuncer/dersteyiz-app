@@ -179,12 +179,14 @@ export default function HomeScreen() {
       ? filtered.filter((t) => t.profile_id !== userId)
       : filtered;
 
-    // Sort boosted teachers to top (only if no price sort active)
-    if (!filters.priceSort && boostedIds.length > 0) {
+    // Sort: boosted first, then premium, then free (only if no price sort active)
+    if (!filters.priceSort) {
       result = [...result].sort((a, b) => {
-        const aBoost = boostedIds.includes(a.profile_id) ? 1 : 0;
-        const bBoost = boostedIds.includes(b.profile_id) ? 1 : 0;
-        return bBoost - aBoost;
+        const aBoost = boostedIds.includes(a.profile_id) ? 2 : 0;
+        const bBoost = boostedIds.includes(b.profile_id) ? 2 : 0;
+        const aPremium = a.subscription_status ? 1 : 0;
+        const bPremium = b.subscription_status ? 1 : 0;
+        return (bBoost + bPremium) - (aBoost + aPremium);
       });
     }
 
@@ -425,7 +427,7 @@ export default function HomeScreen() {
               >
                 <Ionicons name="calendar-outline" size={18} color={Colors.navy} />
                 <Text style={styles.trialBannerText}>
-                  {pendingTrials} bekleyen tanışma talebi
+                  {pendingTrials} bekleyen tanışma dersi talebi
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
               </TouchableOpacity>
@@ -440,8 +442,8 @@ export default function HomeScreen() {
               >
                 <Ionicons name="people" size={18} color={Colors.orange} />
                 <Text style={styles.trialBannerPremiumText}>
-                  {pendingTrials} kişi sizinle tanışmak istiyor!{'\n'}
-                  <Text style={styles.trialBannerPremiumCta}>Premium ile yanıtlayın</Text>
+                  {pendingTrials} veli tanışma dersi talep etti!{'\n'}
+                  <Text style={styles.trialBannerPremiumCta}>Yanıtlamak için Premium'a geçin</Text>
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={Colors.orange} />
               </TouchableOpacity>

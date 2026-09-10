@@ -172,6 +172,14 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn, isBoosted, s
         )}
       </View>
 
+      {/* Trial Lesson Badge */}
+      {teacher.offers_trial && (
+        <View style={styles.trialBadgeRow}>
+          <Ionicons name="school-outline" size={15} color={Colors.success} />
+          <Text style={styles.trialBadgeText}>Tanışma Dersi Var</Text>
+        </View>
+      )}
+
       {/* Location */}
       {locationText && (
         <View style={styles.locationRow}>
@@ -191,8 +199,8 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn, isBoosted, s
         />
       )}
 
-      {/* WhatsApp Button */}
-      {isLoggedIn ? (
+      {/* WhatsApp Button — only for premium teachers */}
+      {isLoggedIn && teacher.subscription_status ? (
         <TouchableOpacity
           style={styles.whatsappButton}
           onPress={(e) => {
@@ -204,6 +212,11 @@ export default function TeacherCard({ teacher, onPress, isLoggedIn, isBoosted, s
           <MaterialCommunityIcons name="whatsapp" size={20} color={Colors.textOnDark} />
           <Text style={styles.whatsappText}>WhatsApp ile İletişime Geç</Text>
         </TouchableOpacity>
+      ) : isLoggedIn && !teacher.subscription_status ? (
+        <View style={styles.contactClosedButton}>
+          <Ionicons name="time-outline" size={16} color={Colors.textTertiary} />
+          <Text style={styles.contactClosedText}>İletişime açılmamıştır</Text>
+        </View>
       ) : (
         <View style={styles.disabledButton}>
           <Ionicons name="lock-closed" size={16} color={Colors.textSecondary} />
@@ -367,6 +380,17 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
+  trialBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 6,
+  },
+  trialBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.success,
+  },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,6 +416,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: Colors.textOnDark,
+  },
+  contactClosedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 4,
+    gap: 8,
+  },
+  contactClosedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textTertiary,
   },
   disabledButton: {
     flexDirection: 'row',

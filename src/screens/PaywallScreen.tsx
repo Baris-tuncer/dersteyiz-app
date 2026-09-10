@@ -15,7 +15,7 @@ import { MONTHLY_PRICE, FREE_TRIAL_DAYS } from '../constants/subscription';
 
 const FEATURES = [
   'Velilerin WhatsApp ile size ulaşmasını sağlayın',
-  'Tanışma taleplerini kabul edin ve iletişime geçin',
+  'Tanışma dersi taleplerini kabul edin ve iletişime geçin',
   'Profilinizi öne çıkarın (ayda 2 kez, 3 gün)',
   'Listenin en üstünde görünün',
   'Öne Çıkan rozeti ile dikkat çekin',
@@ -268,8 +268,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   priceNote: {
-    fontSize: 13,
-    color: Colors.textTertiary,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.navy,
   },
   subscribeButton: {
     backgroundColor: Colors.orange,

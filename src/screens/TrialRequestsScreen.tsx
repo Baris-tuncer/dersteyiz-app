@@ -61,7 +61,7 @@ export default function TrialRequestsScreen() {
   }, [loadRequests]);
 
   const handleAccept = (id: string) => {
-    Alert.alert('Onayla', 'Bu tanışma talebini kabul etmek istiyor musunuz?', [
+    Alert.alert('Onayla', 'Bu tanışma dersi talebini kabul etmek istiyor musunuz?', [
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Kabul Et',
@@ -78,7 +78,7 @@ export default function TrialRequestsScreen() {
   };
 
   const handleReject = (id: string) => {
-    Alert.alert('Reddet', 'Bu tanışma talebini reddetmek istiyor musunuz?', [
+    Alert.alert('Reddet', 'Bu tanışma dersi talebini reddetmek istiyor musunuz?', [
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Reddet',
@@ -167,7 +167,7 @@ export default function TrialRequestsScreen() {
             onPress={() => {
               const url = formatWhatsAppUrl(
                 item.teacher!.phone_number!,
-                `Merhaba, Dersteyiz üzerinden tanışma talebim kabul edildi. Uygun olduğunuz bir zamanda görüşebilir miyiz?`,
+                `Merhaba, Dersteyiz üzerinden tanışma dersi talebim kabul edildi. Uygun olduğunuz bir zamanda görüşebilir miyiz?`,
               );
               Linking.openURL(url);
             }}
@@ -204,8 +204,8 @@ export default function TrialRequestsScreen() {
             <Text style={styles.emptyTitle}>Henüz talep yok</Text>
             <Text style={styles.emptySubtitle}>
               {isTeacher
-                ? 'Veliler size tanışma talebi gönderdiğinde burada görünecek.'
-                : 'Öğretmenlere tanışma talebi gönderdiğinizde burada görünecek.'}
+                ? 'Veliler size tanışma dersi talebi gönderdiğinde burada görünecek.'
+                : 'Öğretmenlere tanışma dersi talebi gönderdiğinizde burada görünecek.'}
             </Text>
           </View>
         }

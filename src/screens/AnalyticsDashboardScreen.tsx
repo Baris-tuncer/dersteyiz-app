@@ -5,14 +5,15 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { fetchTeacher } from '../services/teacherService';
 import {
   fetchViewers,
@@ -39,6 +40,9 @@ function getSinceDate(period: Period): string {
 
 export default function AnalyticsDashboardScreen() {
   const { state } = useAuth();
+  const { state: subState } = useSubscription();
+  const navigation = useNavigation<any>();
+  const isPremium = subState.isPremium;
   const userId = state.user?.id;
 
   const [period, setPeriod] = useState<Period>('7d');
@@ -134,11 +138,21 @@ export default function AnalyticsDashboardScreen() {
                       <Image source={{ uri: v.avatar_url }} style={styles.personAvatar} />
                     ) : (
                       <View style={[styles.personAvatar, styles.personAvatarPlaceholder]}>
-                        <Text style={styles.personInitials}>{getInitials(v.full_name)}</Text>
+                        <Text style={styles.personInitials}>
+                          {isPremium ? getInitials(v.full_name) : '?'}
+                        </Text>
                       </View>
                     )}
                     <View style={styles.personInfo}>
-                      <Text style={styles.personName}>{v.full_name}</Text>
+                      {isPremium ? (
+                        <Text style={styles.personName}>{v.full_name}</Text>
+                      ) : (
+                        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} activeOpacity={0.7}>
+                          <Text style={styles.personNameLocked}>
+                            <Ionicons name="lock-closed" size={12} color={Colors.orange} /> Premium ile görün
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                       {v.city && <Text style={styles.personCity}>{v.city}</Text>}
                     </View>
                     <Text style={styles.personDate}>
@@ -212,11 +226,21 @@ export default function AnalyticsDashboardScreen() {
                       <Image source={{ uri: c.avatar_url }} style={styles.personAvatar} />
                     ) : (
                       <View style={[styles.personAvatar, styles.personAvatarPlaceholder]}>
-                        <Text style={styles.personInitials}>{getInitials(c.full_name)}</Text>
+                        <Text style={styles.personInitials}>
+                          {isPremium ? getInitials(c.full_name) : '?'}
+                        </Text>
                       </View>
                     )}
                     <View style={styles.personInfo}>
-                      <Text style={styles.personName}>{c.full_name}</Text>
+                      {isPremium ? (
+                        <Text style={styles.personName}>{c.full_name}</Text>
+                      ) : (
+                        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} activeOpacity={0.7}>
+                          <Text style={styles.personNameLocked}>
+                            <Ionicons name="lock-closed" size={12} color={Colors.orange} /> Premium ile görün
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                     <Text style={styles.personDate}>
                       {new Date(c.contacted_at).toLocaleDateString('tr-TR')}
@@ -343,6 +367,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+  personNameLocked: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.orange,
   },
   personCity: {
     fontSize: 12,

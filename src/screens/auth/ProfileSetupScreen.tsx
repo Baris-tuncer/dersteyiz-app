@@ -40,6 +40,7 @@ export default function ProfileSetupScreen() {
   const [diplomaUri, setDiplomaUri] = useState<string | null>(null);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState('');
+  const [offersTrial, setOffersTrial] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Picker modals
@@ -177,6 +178,10 @@ export default function ProfileSetupScreen() {
       Alert.alert('Hata', 'Lütfen saatlik ücretinizi girin.');
       return;
     }
+    if (offersTrial === null) {
+      Alert.alert('Hata', 'Lütfen tanışma dersi tercihinizi seçin.');
+      return;
+    }
     if (selectedCategories.length === 0) {
       Alert.alert('Hata', 'Lütfen en az bir kategori seçin.');
       return;
@@ -237,6 +242,7 @@ export default function ProfileSetupScreen() {
         video_url: videoUrl,
         diploma_url: diplomaUrl,
         diploma_status: diplomaUrl ? 'pending' : 'pending',
+        offers_trial: offersTrial ?? false,
       });
 
       if (teacherError) throw teacherError;
@@ -458,6 +464,32 @@ export default function ProfileSetupScreen() {
               keyboardType="number-pad"
               returnKeyType="done"
             />
+          </View>
+
+          {/* Trial Lesson Toggle */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Tanışma Dersi <Text style={styles.required}>*</Text></Text>
+            <View style={styles.trialToggleRow}>
+              <TouchableOpacity
+                style={[styles.trialToggle, offersTrial === true && styles.trialToggleActive]}
+                onPress={() => setOffersTrial(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="checkmark-circle" size={18} color={offersTrial === true ? Colors.textOnDark : Colors.textTertiary} />
+                <Text style={[styles.trialToggleText, offersTrial === true && styles.trialToggleTextActive]}>Evet, veriyorum</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.trialToggle, offersTrial === false && styles.trialToggleActive]}
+                onPress={() => setOffersTrial(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={18} color={offersTrial === false ? Colors.textOnDark : Colors.textTertiary} />
+                <Text style={[styles.trialToggleText, offersTrial === false && styles.trialToggleTextActive]}>Hayır</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.trialNote}>
+              Tanışma dersi vermeyi kabul etmeniz seçilme oranınızı artırır.
+            </Text>
           </View>
 
           {/* Categories */}
@@ -909,6 +941,41 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  trialToggleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 8,
+  },
+  trialToggle: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.borderDark,
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  trialToggleActive: {
+    backgroundColor: Colors.navy,
+    borderColor: Colors.navy,
+  },
+  trialToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  trialToggleTextActive: {
+    color: Colors.textOnDark,
+  },
+  trialNote: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
   diplomaNotice: {
     fontSize: 13,

@@ -34,7 +34,7 @@ export default function TrialRequestModal({
     setSubmitting(true);
     try {
       await createTrialRequest(teacherId, parentId, message.trim());
-      Alert.alert('Gönderildi', 'Tanışma talebiniz öğretmene iletildi.');
+      Alert.alert('Gönderildi', 'Tanışma dersi talebiniz öğretmene iletildi.');
       setMessage('');
       onClose();
     } catch {
@@ -49,14 +49,14 @@ export default function TrialRequestModal({
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
           <View style={styles.header}>
-            <Text style={styles.title}>Tanışma Talebi</Text>
+            <Text style={styles.title}>Tanışma Dersi Talebi</Text>
             <TouchableOpacity onPress={onClose} hitSlop={12}>
               <Ionicons name="close" size={22} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.description}>
-            Öğretmene 15 dakikalık ücretsiz bir tanışma talebi gönderin. Mesajınızı yazarak kendinizi tanıtabilirsiniz.
+            Öğretmene tanışma dersi talebi gönderin. Mesajınızı yazarak hangi konuda destek aradığınızı belirtin.
           </Text>
 
           <TextInput

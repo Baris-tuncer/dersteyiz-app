@@ -19,6 +19,7 @@ export interface Teacher {
   is_verified: boolean;
   view_count: number;
   contact_count: number;
+  offers_trial: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +65,7 @@ export interface TeacherWithDetails {
   avg_rating: number;
   review_count: number;
   experience_years: number;
+  offers_trial: boolean;
   show_diploma: boolean;
   profile: Profile;
   modes: TeacherMode[];

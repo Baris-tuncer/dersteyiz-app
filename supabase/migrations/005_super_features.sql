@@ -27,10 +27,14 @@ CREATE POLICY "Herkes aktif boostları görebilir"
 CREATE INDEX idx_teacher_boosts_active
   ON public.teacher_boosts(teacher_id, expires_at);
 
--- Function to check if teacher can boost (max 2 per month, no active boost)
+-- Function to check if teacher can boost (premium + max 2 per month + no active boost)
 CREATE OR REPLACE FUNCTION public.can_boost(p_teacher_id uuid)
 RETURNS boolean AS $$
-  SELECT (
+  SELECT EXISTS (
+    SELECT 1 FROM public.teachers
+    WHERE profile_id = p_teacher_id AND subscription_status = true
+  )
+  AND (
     SELECT COUNT(*) FROM public.teacher_boosts
     WHERE teacher_id = p_teacher_id
       AND boosted_at >= date_trunc('month', now())
@@ -206,6 +210,7 @@ CREATE INDEX idx_reminders_pending
 ALTER TABLE public.view_logs ADD COLUMN IF NOT EXISTS viewer_city text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS city text;
 ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS experience_years smallint NOT NULL DEFAULT 0;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS offers_trial boolean NOT NULL DEFAULT false;
 
 -- 7. Analytics RPC functions
 CREATE OR REPLACE FUNCTION public.get_view_hours(p_teacher_id uuid, p_since timestamptz)

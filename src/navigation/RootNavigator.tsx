@@ -139,7 +139,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="TrialRequests"
         component={TrialRequestsScreen}
-        options={{ title: 'Tanışma Talepleri' }}
+        options={{ title: 'Tanışma Dersi Talepleri' }}
       />
       <Stack.Screen
         name="Reminders"

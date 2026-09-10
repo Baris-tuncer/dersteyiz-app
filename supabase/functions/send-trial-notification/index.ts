@@ -51,10 +51,10 @@ serve(async (req) => {
       ]);
       const parentName = parent?.full_name ?? 'Bir veli';
       const isPremium = teacherRecord?.subscription_status === true;
-      title = 'Yeni Tanışma Talebi';
+      title = 'Yeni Tanışma Dersi Talebi';
       body = isPremium
-        ? `${parentName} size tanışma talebi gönderdi.`
-        : `${parentName} size tanışma talebi gönderdi. Yanıtlamak için Premium'a geçin.`;
+        ? `${parentName} size tanışma dersi talebi gönderdi.`
+        : `${parentName} size tanışma dersi talebi gönderdi. Yanıtlamak için Premium'a geçin.`;
     } else {
       // Notify parent about accept/reject
       targetUserId = request.parent_id;
@@ -64,8 +64,8 @@ serve(async (req) => {
         .eq('id', request.teacher_id)
         .single();
       const statusText = request.status === 'accepted' ? 'kabul etti' : 'reddetti';
-      title = 'Tanışma Talebi Güncellendi';
-      body = `${teacher?.full_name ?? 'Öğretmen'} tanışma talebinizi ${statusText}.`;
+      title = 'Tanışma Dersi Talebi Güncellendi';
+      body = `${teacher?.full_name ?? 'Öğretmen'} tanışma dersi talebinizi ${statusText}.`;
     }
 
     // In-app notification

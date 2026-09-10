@@ -244,6 +244,16 @@ export default function TeacherDetailScreen() {
         </View>
       </View>
 
+      {/* Trial Lesson Info */}
+      {teacher.offers_trial && (
+        <View style={styles.section}>
+          <View style={styles.trialInfoRow}>
+            <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+            <Text style={styles.trialInfoText}>Bu öğretmen tanışma dersi vermektedir</Text>
+          </View>
+        </View>
+      )}
+
       {/* Locations */}
       {locations.length > 0 && (
         <View style={styles.section}>
@@ -565,6 +575,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+  trialInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.successLight,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  trialInfoText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.success,
   },
   locationItem: {
     flexDirection: 'row',

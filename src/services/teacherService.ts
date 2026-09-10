@@ -12,7 +12,6 @@ export async function fetchTeachers(): Promise<TeacherWithDetails[]> {
       categories:teacher_categories(category:categories(*)),
       tags:teacher_tags(tag:tags(*))
     `)
-    .eq('subscription_status', true)
     .order('created_at', { ascending: false });
 
   if (error) throw error;

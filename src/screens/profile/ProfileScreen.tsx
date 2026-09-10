@@ -189,8 +189,8 @@ export default function ProfileScreen() {
           {
             iconLib: 'ionicons' as const,
             iconName: 'calendar-outline' as IoniconsName,
-            label: 'Tanışma Talepleri',
-            description: 'Gelen tanışma taleplerini yönetin',
+            label: 'Tanışma Dersi Talepleri',
+            description: 'Gelen tanışma dersi taleplerini yönetin',
             onPress: () => navigation.navigate('TrialRequests'),
           },
         ]

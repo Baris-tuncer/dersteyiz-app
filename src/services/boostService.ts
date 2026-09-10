@@ -35,8 +35,9 @@ export async function getActiveBoost(teacherId: string): Promise<TeacherBoost | 
 export async function fetchBoostedTeacherIds(): Promise<string[]> {
   const { data, error } = await supabase
     .from('teacher_boosts')
-    .select('teacher_id')
-    .gt('expires_at', new Date().toISOString());
+    .select('teacher_id, teacher:teachers!inner(subscription_status)')
+    .gt('expires_at', new Date().toISOString())
+    .eq('teacher.subscription_status', true);
   if (error) throw error;
   return (data ?? []).map((b) => b.teacher_id);
 }
