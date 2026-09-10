@@ -329,7 +329,7 @@ export default function ProfileScreen() {
               <View style={styles.subscriptionBanner}>
                 <Ionicons name="alert-circle-outline" size={18} color={Colors.orange} />
                 <Text style={styles.subscriptionText}>
-                  Profiliniz henüz listelenmede görünmüyor. Abonelik aktif değil.
+                  Profiliniz listeleniyor ancak veliler size ulaşamıyor. Premium ile iletişime açılın.
                 </Text>
               </View>
             )}
