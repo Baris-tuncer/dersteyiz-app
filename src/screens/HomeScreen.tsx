@@ -396,7 +396,7 @@ export default function HomeScreen() {
                         setBoostAvailable(false);
                         Alert.alert('Profiliniz öne çıkarıldı!', '3 gün boyunca listenin üstünde görüneceksiniz. Ayda 2 kez kullanabilirsiniz.');
                       } catch {
-                        Alert.alert('Hata', 'Boost yapılamadı.');
+                        Alert.alert('Hata', 'Profil öne çıkarılamadı.');
                       }
                     }}
                     activeOpacity={0.7}

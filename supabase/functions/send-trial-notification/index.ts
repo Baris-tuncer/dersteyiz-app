@@ -37,13 +37,24 @@ serve(async (req) => {
     if (type === 'new_request') {
       // Notify teacher
       targetUserId = request.teacher_id;
-      const { data: parent } = await supabaseAdmin
-        .from('profiles')
-        .select('full_name')
-        .eq('id', request.parent_id)
-        .single();
+      const [{ data: parent }, { data: teacherRecord }] = await Promise.all([
+        supabaseAdmin
+          .from('profiles')
+          .select('full_name')
+          .eq('id', request.parent_id)
+          .single(),
+        supabaseAdmin
+          .from('teachers')
+          .select('subscription_status')
+          .eq('profile_id', request.teacher_id)
+          .single(),
+      ]);
+      const parentName = parent?.full_name ?? 'Bir veli';
+      const isPremium = teacherRecord?.subscription_status === true;
       title = 'Yeni Tanışma Talebi';
-      body = `${parent?.full_name ?? 'Bir veli'} size tanışma talebi gönderdi.`;
+      body = isPremium
+        ? `${parentName} size tanışma talebi gönderdi.`
+        : `${parentName} size tanışma talebi gönderdi. Yanıtlamak için Premium'a geçin.`;
     } else {
       // Notify parent about accept/reject
       targetUserId = request.parent_id;
