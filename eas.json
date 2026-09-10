@@ -25,7 +25,8 @@
       "ios": {
         "ascApiKeyPath": "/Users/baristuncer/Downloads/AuthKey_86747J4623.p8",
         "ascApiKeyId": "86747J4623",
-        "ascApiKeyIssuerId": "37d444a2-6c57-4737-ac4d-83019c318fc0"
+        "ascApiKeyIssuerId": "37d444a2-6c57-4737-ac4d-83019c318fc0",
+        "ascAppId": "6810721176"
       },
       "android": {
         "serviceAccountKeyPath": "/Users/baristuncer/Desktop/candostum/google-service-account.json",
