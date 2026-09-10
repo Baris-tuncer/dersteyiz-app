@@ -22,7 +22,7 @@ import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
 import { getInitials } from '../../utils/formatters';
-import { CATEGORIES, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
+import { CATEGORIES, CATEGORY_GROUPS, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import FilterModal from '../../components/FilterModal';
 import { TURKEY_CITIES } from '../../constants/cities';
 import AvailabilityEditor from '../../components/AvailabilityEditor';
@@ -355,7 +355,7 @@ export default function EditProfileScreen() {
   const filteredTags = getTagsForCategories(selectedCategories);
   const getTagText = () => {
     if (selectedTags.length === 0) return 'Etiket seçin';
-    const allTags = getTagsForCategories([1,2,3,4,5,6,7,8,9,10,11,12]);
+    const allTags = getTagsForCategories(CATEGORIES.map((c) => c.id));
     const names = selectedTags.map((id) => allTags.find((t) => t.id === id)?.name).filter(Boolean);
     if (names.length <= 2) return names.join(', ');
     return `${names.length} etiket seçildi`;
@@ -678,13 +678,19 @@ export default function EditProfileScreen() {
         onSelectMulti={(values) => setMajor(values[0] as string ?? '')}
         onClose={() => setShowMajorPicker(false)}
       />
-      <PickerModal
+      <FilterModal
         visible={showCategoryPicker}
         onClose={() => setShowCategoryPicker(false)}
         title="Kategoriler"
-        data={CATEGORIES.map((c) => ({ id: c.id, label: c.name }))}
-        selected={selectedCategories}
-        onToggle={toggleCategory}
+        options={CATEGORIES.map((c) => ({ label: c.name, value: c.id }))}
+        groups={CATEGORY_GROUPS.map((g) => ({
+          title: g.title,
+          items: g.items.map((c) => ({ label: c.name, value: c.id })),
+        }))}
+        selectedValues={selectedCategories}
+        multiSelect
+        searchable
+        onSelectMulti={(values) => setSelectedCategories(values as number[])}
       />
       <PickerModal
         visible={showModePicker}

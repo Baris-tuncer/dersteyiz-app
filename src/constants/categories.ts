@@ -1,19 +1,117 @@
-export const CATEGORIES = [
+export interface CategoryItem {
+  id: number;
+  name: string;
+  group: string;
+}
+
+export const CATEGORIES: readonly CategoryItem[] = [
+  // Eğitim Kademesi
+  { id: 3, name: 'İlkokul Temel', group: 'academic' },
   { id: 1, name: 'LGS & Ortaokul', group: 'academic' },
   { id: 2, name: 'YKS & Lise', group: 'academic' },
-  { id: 3, name: 'İlkokul Temel', group: 'academic' },
+  { id: 7, name: 'Açık Öğretim Dersleri', group: 'academic' },
+  // Sınav Hazırlık
   { id: 4, name: 'Sınav Koçluğu', group: 'academic' },
-  { id: 5, name: 'Yabancı Dil', group: 'academic' },
+  { id: 15, name: 'KPSS', group: 'academic' },
+  { id: 16, name: 'DGS', group: 'academic' },
+  { id: 6, name: 'ALES', group: 'academic' },
+  { id: 17, name: 'YDS', group: 'academic' },
   { id: 13, name: 'IELTS', group: 'academic' },
   { id: 14, name: 'TOEFL', group: 'academic' },
-  { id: 6, name: 'ALES', group: 'academic' },
-  { id: 7, name: 'Açık Öğretim Dersleri', group: 'academic' },
-  { id: 8, name: 'Okul Öncesi / Oyun Ablalığı', group: 'special' },
-  { id: 9, name: 'Özel Eğitim', group: 'special' },
+  // Yabancı Dil
+  { id: 5, name: 'Yabancı Dil', group: 'academic' },
+  // Müzik
+  { id: 12, name: 'Enstrüman', group: 'special' },
+  // Spor
   { id: 10, name: 'Pilates', group: 'special' },
   { id: 11, name: 'Personal Training', group: 'special' },
-  { id: 12, name: 'Enstrüman', group: 'special' },
+  { id: 18, name: 'Spor & Sağlık', group: 'special' },
+  // Sanat
+  { id: 19, name: 'Sanat & Tasarım', group: 'special' },
+  // Teknoloji
+  { id: 20, name: 'Teknoloji', group: 'special' },
+  // Çocuk & Özel Eğitim
+  { id: 8, name: 'Okul Öncesi / Oyun Ablalığı', group: 'special' },
+  { id: 9, name: 'Özel Eğitim', group: 'special' },
+  { id: 22, name: 'Çocuk Gelişimi', group: 'special' },
+  // Kişisel Gelişim
+  { id: 21, name: 'Kişisel Gelişim & Hobi', group: 'special' },
 ] as const;
+
+export interface CategoryGroup {
+  title: string;
+  items: CategoryItem[];
+}
+
+export const CATEGORY_GROUPS: CategoryGroup[] = [
+  {
+    title: 'Eğitim Kademesi',
+    items: [
+      { id: 3, name: 'İlkokul Temel', group: 'academic' },
+      { id: 1, name: 'LGS & Ortaokul', group: 'academic' },
+      { id: 2, name: 'YKS & Lise', group: 'academic' },
+      { id: 7, name: 'Açık Öğretim Dersleri', group: 'academic' },
+    ],
+  },
+  {
+    title: 'Sınav Hazırlık',
+    items: [
+      { id: 4, name: 'Sınav Koçluğu', group: 'academic' },
+      { id: 15, name: 'KPSS', group: 'academic' },
+      { id: 16, name: 'DGS', group: 'academic' },
+      { id: 6, name: 'ALES', group: 'academic' },
+      { id: 17, name: 'YDS', group: 'academic' },
+      { id: 13, name: 'IELTS', group: 'academic' },
+      { id: 14, name: 'TOEFL', group: 'academic' },
+    ],
+  },
+  {
+    title: 'Yabancı Dil',
+    items: [
+      { id: 5, name: 'Yabancı Dil', group: 'academic' },
+    ],
+  },
+  {
+    title: 'Müzik & Enstrüman',
+    items: [
+      { id: 12, name: 'Enstrüman', group: 'special' },
+    ],
+  },
+  {
+    title: 'Spor & Sağlık',
+    items: [
+      { id: 10, name: 'Pilates', group: 'special' },
+      { id: 11, name: 'Personal Training', group: 'special' },
+      { id: 18, name: 'Spor & Sağlık', group: 'special' },
+    ],
+  },
+  {
+    title: 'Sanat & Tasarım',
+    items: [
+      { id: 19, name: 'Sanat & Tasarım', group: 'special' },
+    ],
+  },
+  {
+    title: 'Teknoloji',
+    items: [
+      { id: 20, name: 'Teknoloji', group: 'special' },
+    ],
+  },
+  {
+    title: 'Çocuk & Özel Eğitim',
+    items: [
+      { id: 8, name: 'Okul Öncesi / Oyun Ablalığı', group: 'special' },
+      { id: 9, name: 'Özel Eğitim', group: 'special' },
+      { id: 22, name: 'Çocuk Gelişimi', group: 'special' },
+    ],
+  },
+  {
+    title: 'Kişisel Gelişim & Hobi',
+    items: [
+      { id: 21, name: 'Kişisel Gelişim & Hobi', group: 'special' },
+    ],
+  },
+];
 
 export interface MajorGroup {
   title: string;
@@ -26,7 +124,7 @@ export const MAJOR_GROUPS: MajorGroup[] = [
     items: [
       'Matematik', 'Geometri', 'Fizik', 'Kimya', 'Biyoloji',
       'Türkçe', 'Edebiyat', 'Tarih', 'Coğrafya', 'Felsefe',
-      'Hızlı Okuma',
+      'Sosyal Bilgiler', 'Fen Bilgisi', 'Hızlı Okuma',
     ],
   },
   {
@@ -71,9 +169,9 @@ export const MAJOR_GROUPS: MajorGroup[] = [
 export const MAJORS: readonly string[] = MAJOR_GROUPS.flatMap((g) => g.items);
 
 // Etiketler kategori grubuna göre filtrelenir
-// 'academic' → akademik kategoriler (ids 1-7) + Okul Öncesi (8) + Özel Eğitim (9)
+// 'academic' → akademik kategoriler
 // 'music'    → Enstrüman (12)
-// 'sports'   → Pilates (10), Personal Training (11)
+// 'sports'   → Pilates (10), Personal Training (11), Spor & Sağlık (18)
 // 'common'   → herkese gösterilir
 export type TagGroup = 'academic' | 'music' | 'sports' | 'common';
 
@@ -123,11 +221,19 @@ const CATEGORY_TAG_MAP: Record<number, TagGroup[]> = {
   7: ['academic'],   // Açık Öğretim
   13: ['academic'],  // IELTS
   14: ['academic'],  // TOEFL
+  15: ['academic'],  // KPSS
+  16: ['academic'],  // DGS
+  17: ['academic'],  // YDS
   8: ['academic'],   // Okul Öncesi
   9: ['academic'],   // Özel Eğitim
+  22: ['academic'],  // Çocuk Gelişimi
   10: ['sports'],    // Pilates
   11: ['sports'],    // Personal Training
+  18: ['sports'],    // Spor & Sağlık
   12: ['music'],     // Enstrüman
+  19: ['music'],     // Sanat & Tasarım
+  20: ['academic'],  // Teknoloji
+  21: ['common'],    // Kişisel Gelişim & Hobi
 };
 
 export function getTagsForCategories(categoryIds: number[]) {

@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
-import { CATEGORIES, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
+import { CATEGORIES, CATEGORY_GROUPS, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getTagsForCategories } from '../../constants/categories';
 import { TURKEY_CITIES } from '../../constants/cities';
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -539,29 +539,39 @@ export default function ProfileSetupScreen() {
 
           {/* Categories */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Kategoriler (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text></Text>
-            <View style={styles.checkboxGrid}>
-              {CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={styles.checkboxRow}
-                  onPress={() => toggleCategory(cat.id)}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      selectedCategories.includes(cat.id) && styles.checkboxActive,
-                    ]}
-                  >
-                    {selectedCategories.includes(cat.id) && (
-                      <Ionicons name="checkmark" size={16} color={Colors.textOnDark} />
-                    )}
-                  </View>
-                  <Text style={styles.checkboxLabel}>{cat.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Text style={styles.label}>
+              Kategoriler (birden fazla seçebilirsiniz) <Text style={styles.required}>*</Text>
+              {selectedCategories.length > 0 && (
+                <Text style={styles.selectedCount}> ({selectedCategories.length} seçili)</Text>
+              )}
+            </Text>
+            {CATEGORY_GROUPS.map((group) => (
+              <View key={group.title} style={styles.majorGroup}>
+                <Text style={styles.majorGroupTitle}>{group.title}</Text>
+                <View style={styles.checkboxGrid}>
+                  {group.items.map((cat) => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={styles.checkboxRow}
+                      onPress={() => toggleCategory(cat.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View
+                        style={[
+                          styles.checkbox,
+                          selectedCategories.includes(cat.id) && styles.checkboxActive,
+                        ]}
+                      >
+                        {selectedCategories.includes(cat.id) && (
+                          <Ionicons name="checkmark" size={16} color={Colors.textOnDark} />
+                        )}
+                      </View>
+                      <Text style={styles.checkboxLabel}>{cat.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
           </View>
 
           {/* Teaching Modes */}

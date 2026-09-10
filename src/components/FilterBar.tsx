@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
-import { CATEGORIES, MAJORS, MAJOR_GROUPS, TAGS, TEACHING_MODES } from '../constants/categories';
+import { CATEGORIES, CATEGORY_GROUPS, MAJORS, MAJOR_GROUPS, TAGS, TEACHING_MODES } from '../constants/categories';
 import { TURKEY_CITIES } from '../constants/cities';
 import type { TeacherFilters, TeachingMode } from '../types/teacher';
 import FilterModal from './FilterModal';
@@ -311,11 +311,16 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
                   title: g.title,
                   items: g.items.map((m) => ({ label: m, value: m })),
                 }))
-              : undefined
+              : activeModal === 'category'
+                ? CATEGORY_GROUPS.map((g) => ({
+                    title: g.title,
+                    items: g.items.map((c) => ({ label: c.name, value: c.id })),
+                  }))
+                : undefined
           }
           selectedValues={getSelectedValues(filters, activeModal)}
           multiSelect={isMultiSelect(activeModal)}
-          searchable={activeModal === 'major' || activeModal === 'city'}
+          searchable={activeModal === 'major' || activeModal === 'city' || activeModal === 'category'}
           showCustomInput={activeModal === 'tag'}
           onSelectMulti={(values) => handleMultiFilterSelect(activeModal, values)}
           onClose={() => setActiveModal(null)}
