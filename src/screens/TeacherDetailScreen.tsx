@@ -275,8 +275,8 @@ export default function TeacherDetailScreen() {
         />
       )}
 
-      {/* WhatsApp Button */}
-      {state.user ? (
+      {/* WhatsApp Button — only for premium teachers */}
+      {state.user && teacher.subscription_status ? (
         <TouchableOpacity
           style={styles.whatsappButton}
           onPress={handleWhatsApp}
@@ -287,6 +287,13 @@ export default function TeacherDetailScreen() {
             WhatsApp ile İletişime Geç
           </Text>
         </TouchableOpacity>
+      ) : state.user && !teacher.subscription_status ? (
+        <View style={styles.contactClosed}>
+          <Ionicons name="time-outline" size={20} color={Colors.textTertiary} />
+          <Text style={styles.contactClosedText}>
+            Bu öğretmen henüz iletişime açılmamıştır.
+          </Text>
+        </View>
       ) : (
         <View style={styles.loginPrompt}>
           <Ionicons name="lock-closed" size={18} color={Colors.textSecondary} />
@@ -584,6 +591,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textOnDark,
+  },
+  contactClosed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginTop: 28,
+    gap: 10,
+  },
+  contactClosedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textTertiary,
   },
   loginPrompt: {
     flexDirection: 'row',

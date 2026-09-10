@@ -11,9 +11,11 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import {
   fetchTrialRequestsForTeacher,
   fetchTrialRequestsForParent,
@@ -31,8 +33,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function TrialRequestsScreen() {
   const { state } = useAuth();
+  const navigation = useNavigation<any>();
+  const { state: subState } = useSubscription();
   const userId = state.user?.id;
   const isTeacher = state.user?.user_metadata?.role === 'teacher';
+  const isPremium = subState.isPremium;
 
   const [requests, setRequests] = useState<TrialRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +126,7 @@ export default function TrialRequestsScreen() {
           <Text style={styles.message}>{item.message}</Text>
         ) : null}
 
-        {isTeacher && item.status === 'pending' && (
+        {isTeacher && item.status === 'pending' && isPremium && (
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.acceptButton}
@@ -140,6 +145,20 @@ export default function TrialRequestsScreen() {
               <Text style={styles.rejectText}>Reddet</Text>
             </TouchableOpacity>
           </View>
+        )}
+
+        {isTeacher && item.status === 'pending' && !isPremium && (
+          <TouchableOpacity
+            style={styles.premiumPrompt}
+            onPress={() => navigation.navigate('Paywall')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="lock-closed" size={16} color={Colors.orange} />
+            <Text style={styles.premiumPromptText}>
+              Yanıtlamak için Premium'a geçin
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.orange} />
+          </TouchableOpacity>
         )}
 
         {!isTeacher && item.status === 'accepted' && item.teacher?.phone_number && (
@@ -321,6 +340,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.error,
+  },
+  premiumPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.orangeLight,
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 14,
+    gap: 8,
+  },
+  premiumPromptText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.orange,
   },
   whatsappButton: {
     flexDirection: 'row',

@@ -3,12 +3,12 @@
 --      Trial Requests, Reminders, Analytics Enhancements
 -- ============================================================
 
--- 1. TEACHER BOOSTS (weekly profile boost)
+-- 1. TEACHER BOOSTS (2x per month, 3-day profile boost)
 CREATE TABLE public.teacher_boosts (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   teacher_id  uuid NOT NULL REFERENCES public.teachers(profile_id) ON DELETE CASCADE,
   boosted_at  timestamptz NOT NULL DEFAULT now(),
-  expires_at  timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
+  expires_at  timestamptz NOT NULL DEFAULT (now() + interval '3 days'),
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
@@ -27,10 +27,15 @@ CREATE POLICY "Herkes aktif boostları görebilir"
 CREATE INDEX idx_teacher_boosts_active
   ON public.teacher_boosts(teacher_id, expires_at);
 
--- Function to check if teacher can boost (once per week)
+-- Function to check if teacher can boost (max 2 per month, no active boost)
 CREATE OR REPLACE FUNCTION public.can_boost(p_teacher_id uuid)
 RETURNS boolean AS $$
-  SELECT NOT EXISTS (
+  SELECT (
+    SELECT COUNT(*) FROM public.teacher_boosts
+    WHERE teacher_id = p_teacher_id
+      AND boosted_at >= date_trunc('month', now())
+  ) < 2
+  AND NOT EXISTS (
     SELECT 1 FROM public.teacher_boosts
     WHERE teacher_id = p_teacher_id
       AND expires_at > now()

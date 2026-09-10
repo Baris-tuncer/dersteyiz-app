@@ -14,11 +14,12 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { MONTHLY_PRICE, FREE_TRIAL_DAYS } from '../constants/subscription';
 
 const FEATURES = [
-  'Profiliniz vitrine çıkar',
-  'Öğrenciler sizi kolayca bulur',
-  'WhatsApp ile doğrudan iletişim',
-  'Sınırsız profil görüntülenme',
-  'Öncelikli destek',
+  'Velilerin WhatsApp ile size ulaşmasını sağlayın',
+  'Tanışma taleplerini kabul edin ve iletişime geçin',
+  'Profilinizi öne çıkarın (ayda 2 kez, 3 gün)',
+  'Listenin en üstünde görünün',
+  'Öne Çıkan rozeti ile dikkat çekin',
+  'Detaylı analitik: kim baktı, hangi şehir, hangi saat',
 ];
 
 export default function PaywallScreen() {

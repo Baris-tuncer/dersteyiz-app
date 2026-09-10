@@ -394,7 +394,7 @@ export default function HomeScreen() {
                       try {
                         await createBoost(userId!);
                         setBoostAvailable(false);
-                        Alert.alert('Profiliniz öne çıkarıldı!', '7 gün boyunca listenin üstünde görüneceksiniz.');
+                        Alert.alert('Profiliniz öne çıkarıldı!', '3 gün boyunca listenin üstünde görüneceksiniz. Ayda 2 kez kullanabilirsiniz.');
                       } catch {
                         Alert.alert('Hata', 'Boost yapılamadı.');
                       }
@@ -417,7 +417,7 @@ export default function HomeScreen() {
             )}
 
             {/* Pending Trials */}
-            {pendingTrials > 0 && (
+            {pendingTrials > 0 && myProfile?.subscription_status && (
               <TouchableOpacity
                 style={styles.trialBanner}
                 onPress={() => navigation.navigate('TrialRequests')}
@@ -431,14 +431,35 @@ export default function HomeScreen() {
               </TouchableOpacity>
             )}
 
+            {/* Pending Trials — free teacher → premium upsell */}
+            {pendingTrials > 0 && !myProfile?.subscription_status && (
+              <TouchableOpacity
+                style={styles.trialBannerPremium}
+                onPress={() => navigation.navigate('Paywall')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="people" size={18} color={Colors.orange} />
+                <Text style={styles.trialBannerPremiumText}>
+                  {pendingTrials} kişi sizinle tanışmak istiyor!{'\n'}
+                  <Text style={styles.trialBannerPremiumCta}>Premium ile yanıtlayın</Text>
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.orange} />
+              </TouchableOpacity>
+            )}
+
             {/* Subscription Banner */}
             {!myProfile.subscription_status && (
-              <View style={styles.subscriptionBanner}>
+              <TouchableOpacity
+                style={styles.subscriptionBanner}
+                onPress={() => navigation.navigate('Paywall')}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="alert-circle" size={18} color={Colors.orange} />
                 <Text style={styles.subscriptionText}>
-                  Profiliniz şu an görünmüyor. Abonelik ile öğrencilere ulaşın.
+                  Veliler size ulaşamıyor. Premium ile iletişime açılın.
                 </Text>
-              </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.orange} />
+              </TouchableOpacity>
             )}
 
             {/* Other Teachers Header */}
@@ -720,6 +741,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.navy,
+  },
+  trialBannerPremium: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.orangeLight,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.orange,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  trialBannerPremiumText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    lineHeight: 20,
+  },
+  trialBannerPremiumCta: {
+    fontWeight: '700',
+    color: Colors.orange,
   },
   compareFab: {
     position: 'absolute',
