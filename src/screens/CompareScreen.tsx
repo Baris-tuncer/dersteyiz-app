@@ -51,7 +51,7 @@ export default function CompareScreen() {
     },
     { label: 'Puan', getValue: (t) => t.avg_rating > 0 ? `${t.avg_rating.toFixed(1)} (${t.review_count})` : '-' },
     { label: 'Deneyim', getValue: (t) => t.experience_years > 0 ? `${t.experience_years} yıl` : '-' },
-    { label: 'Görüntülenme', getValue: (t) => String(t.view_count) },
+    { label: 'Gösterim', getValue: (t) => String(t.view_count) },
     { label: 'Onaylı', getValue: (t) => t.is_verified ? 'Evet' : 'Hayır' },
     { label: 'Video', getValue: (t) => t.video_url ? 'Var' : 'Yok' },
   ];
