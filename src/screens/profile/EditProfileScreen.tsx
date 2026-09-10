@@ -107,6 +107,7 @@ export default function EditProfileScreen() {
   const [city, setCity] = useState('');
   const [university, setUniversity] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [offersTrial, setOffersTrial] = useState<boolean | null>(null);
   const [showDiploma, setShowDiploma] = useState(false);
   const [diplomaApproved, setDiplomaApproved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -170,6 +171,7 @@ export default function EditProfileScreen() {
           setSelectedTags(teacher.tags?.map((t: any) => t.tag_id) ?? []);
           const firstLoc = teacher.locations?.[0];
           if (firstLoc) setCity(firstLoc.city);
+          setOffersTrial(teacher.offers_trial ?? false);
           setShowDiploma(teacher.show_diploma ?? false);
           setDiplomaApproved(teacher.diploma_status === 'approved');
         }
@@ -284,6 +286,7 @@ export default function EditProfileScreen() {
             university: university.trim(),
             hourly_rate: parseInt(hourlyRate, 10) || 0,
             phone_number: phone.replace(/[^0-9]/g, ''),
+            offers_trial: offersTrial ?? false,
             show_diploma: showDiploma,
           })
           .eq('profile_id', userId);
@@ -493,6 +496,34 @@ export default function EditProfileScreen() {
               placeholderTextColor={Colors.textTertiary}
               keyboardType="number-pad"
             />
+          </View>
+
+          {/* Tanışma Dersi Toggle */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Tanışma Dersi</Text>
+            <View style={styles.trialToggleRow}>
+              <TouchableOpacity
+                style={[styles.trialToggle, offersTrial === true && styles.trialToggleActive]}
+                onPress={() => setOffersTrial(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.trialToggleText, offersTrial === true && styles.trialToggleTextActive]}>
+                  Evet, veriyorum
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.trialToggle, offersTrial === false && styles.trialToggleActive]}
+                onPress={() => setOffersTrial(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.trialToggleText, offersTrial === false && styles.trialToggleTextActive]}>
+                  Hayır
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.trialNote}>
+              Tanışma dersi vermeyi kabul etmeniz seçilme oranınızı artırır.
+            </Text>
           </View>
 
           {/* Kategoriler Dropdown */}
@@ -864,6 +895,37 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 19,
     marginBottom: 10,
+  },
+  trialToggleRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  trialToggle: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+  },
+  trialToggleActive: {
+    borderColor: Colors.navy,
+    backgroundColor: Colors.navy,
+  },
+  trialToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  trialToggleTextActive: {
+    color: Colors.textOnDark,
+  },
+  trialNote: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 8,
   },
   saveButton: {
     backgroundColor: Colors.orange,
