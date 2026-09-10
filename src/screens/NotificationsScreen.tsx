@@ -8,11 +8,13 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import type { RootStackParamList } from '../types/navigation';
 import {
   fetchNotifications,
   markNotificationRead,
@@ -37,6 +39,9 @@ const ICON_MAP: Record<string, { name: React.ComponentProps<typeof Ionicons>['na
   favorite_update: { name: 'heart', color: Colors.error },
   re_engagement: { name: 'sparkles', color: Colors.orange },
   profile_tip: { name: 'bulb', color: Colors.warning },
+  trial_request: { name: 'calendar', color: Colors.navy },
+  new_review: { name: 'star', color: Colors.orange },
+  reminder: { name: 'alarm', color: Colors.orange },
 };
 
 function getTimeAgo(dateStr: string): string {
@@ -57,6 +62,7 @@ function getTimeAgo(dateStr: string): string {
 export default function NotificationsScreen() {
   const { state } = useAuth();
   const { refreshUnreadCount } = useNotifications();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userId = state.user?.id;
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -95,7 +101,18 @@ export default function NotificationsScreen() {
       );
       refreshUnreadCount();
     }
-  }, [refreshUnreadCount]);
+
+    const type = item.data?.type;
+    if (type === 'trial_request') {
+      navigation.navigate('TrialRequests');
+    } else if (type === 'new_review') {
+      if (userId) navigation.navigate('TeacherDetail', { teacherId: userId });
+    } else if (type === 'reminder') {
+      navigation.navigate('Reminders');
+    } else if (type === 'diploma_status') {
+      navigation.navigate('EditProfile');
+    }
+  }, [refreshUnreadCount, navigation, userId]);
 
   const handleMarkAllRead = useCallback(async () => {
     if (!userId) return;

@@ -115,23 +115,34 @@ export default function AdminPanelScreen() {
 
   const loadPending = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data: teacherData, error } = await supabase
         .from('teachers')
-        .select(`
-          profile_id,
-          diploma_url,
-          major,
-          created_at,
-          profile:profiles(full_name, avatar_url)
-        `)
+        .select('profile_id, diploma_url, major, created_at')
         .eq('diploma_status', 'pending')
         .not('diploma_url', 'is', null)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setPendingDiplomas((data ?? []) as unknown as PendingDiploma[]);
-    } catch {
-      Alert.alert('Hata', 'Diplomalar yüklenemedi.');
+
+      // Fetch profiles separately to avoid FK ambiguity
+      const ids = (teacherData ?? []).map((t) => t.profile_id);
+      let profileMap = new Map<string, { full_name: string; avatar_url: string | null }>();
+      if (ids.length > 0) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', ids);
+        profileMap = new Map((profileData ?? []).map((p) => [p.id, p]));
+      }
+
+      const result = (teacherData ?? []).map((t) => ({
+        ...t,
+        profile: profileMap.get(t.profile_id) ?? { full_name: 'İsimsiz', avatar_url: null },
+      }));
+
+      setPendingDiplomas(result as PendingDiploma[]);
+    } catch (err: any) {
+      Alert.alert('Hata', err?.message || 'Diplomalar yüklenemedi.');
     }
   }, []);
 
