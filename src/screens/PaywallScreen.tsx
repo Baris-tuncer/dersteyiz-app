@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { MONTHLY_PRICE, FREE_TRIAL_DAYS } from '../constants/subscription';
+import { trackPaywallEvent } from '../services/eventService';
 
 const FEATURES = [
   'Velilerin WhatsApp ile size ulaşmasını sağlayın',
@@ -29,16 +30,30 @@ export default function PaywallScreen() {
 
   const displayPrice = state.productPrice || MONTHLY_PRICE;
 
+  useEffect(() => {
+    trackPaywallEvent('paywall_viewed');
+  }, []);
+
   const handleSubscribe = async () => {
+    trackPaywallEvent('subscribe_tapped');
     setLoading(true);
     try {
+      trackPaywallEvent('purchase_started');
       await purchaseSubscription();
+      trackPaywallEvent('purchase_completed');
+    } catch (e: any) {
+      if (e?.userCancelled) {
+        trackPaywallEvent('purchase_cancelled');
+      } else {
+        trackPaywallEvent('purchase_failed', { error: e?.message });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleRestore = async () => {
+    trackPaywallEvent('restore_tapped');
     setLoading(true);
     try {
       await restorePurchases();

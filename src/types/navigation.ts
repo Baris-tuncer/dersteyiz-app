@@ -21,6 +21,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   Settings: undefined;
   AdminPanel: undefined;
+  AdminUserDetail: { userId: string };
   Notifications: undefined;
   Paywall: undefined;
   KVKK: undefined;

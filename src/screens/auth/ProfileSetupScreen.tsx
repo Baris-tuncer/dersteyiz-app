@@ -24,9 +24,11 @@ import { CATEGORIES, CATEGORY_GROUPS, MAJORS, MAJOR_GROUPS, TEACHING_MODES, getT
 import { TURKEY_CITIES } from '../../constants/cities';
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
+import { validatePhone } from '../../utils/validation';
 
 export default function ProfileSetupScreen() {
   const { signOut, completeProfile, state } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState(state.user?.user_metadata?.phone_number ?? '');
   const [bio, setBio] = useState('');
   const [selectedMajors, setSelectedMajors] = useState<string[]>([]);
   const [hourlyRate, setHourlyRate] = useState('');
@@ -164,6 +166,10 @@ export default function ProfileSetupScreen() {
       Alert.alert('Hata', 'Lütfen bir profil fotoğrafı seçin.');
       return;
     }
+    if (!validatePhone(phoneNumber)) {
+      Alert.alert('Hata', 'Lütfen geçerli bir telefon numarası girin (WhatsApp iletişimi için gerekli).');
+      return;
+    }
     if (!bio.trim()) {
       Alert.alert('Hata', 'Lütfen kendinizi tanıtan bir biyografi yazın.');
       return;
@@ -238,7 +244,7 @@ export default function ProfileSetupScreen() {
         bio: bio.trim(),
         major: selectedMajors.join(', '),
         university: university.trim(),
-        phone_number: user.user_metadata?.phone_number ?? '',
+        phone_number: phoneNumber.trim(),
         email: user.email ?? '',
         hourly_rate: parseInt(hourlyRate, 10),
         video_url: videoUrl,
@@ -397,6 +403,21 @@ export default function ProfileSetupScreen() {
                 </View>
               )}
             </TouchableOpacity>
+          </View>
+
+          {/* Phone Number */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>WhatsApp Telefon Numarası <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={styles.input}
+              placeholder="05XX XXX XX XX"
+              placeholderTextColor={Colors.textTertiary}
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              returnKeyType="next"
+            />
+            <Text style={styles.phoneHint}>Veliler bu numara üzerinden sizinle iletişime geçecektir.</Text>
           </View>
 
           {/* Bio */}
@@ -1057,6 +1078,11 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  phoneHint: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    marginTop: 6,
   },
   trialToggleRow: {
     flexDirection: 'row',

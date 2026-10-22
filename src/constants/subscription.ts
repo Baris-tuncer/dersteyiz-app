@@ -6,7 +6,7 @@ export const REVENUECAT_API_KEY = Platform.select({
   default: '',
 });
 
-export const ENTITLEMENT_ID = 'Dersteyiz Pro';
+export const ENTITLEMENT_ID = 'dersteyiz_pro';
 export const SUBSCRIPTION_SKU = 'com.dersteyiz.app.premium.monthly';
 export const MONTHLY_PRICE = '₺299';
 export const FREE_TRIAL_DAYS = 90;

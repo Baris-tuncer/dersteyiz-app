@@ -181,6 +181,14 @@ export default function ProfileScreen() {
       ? [
           {
             iconLib: 'ionicons' as const,
+            iconName: 'star-outline' as IoniconsName,
+            label: stats.subscription_status ? 'Premium Abonelik' : 'Premium\'a Geç',
+            description: stats.subscription_status ? 'Abonelik bilgilerinizi görüntüleyin' : 'Profilinizi öne çıkarın, daha fazla öğrenciye ulaşın',
+            onPress: () => navigation.navigate('Paywall'),
+            highlight: !stats.subscription_status,
+          },
+          {
+            iconLib: 'ionicons' as const,
             iconName: 'analytics-outline' as IoniconsName,
             label: 'Detaylı Analitik',
             description: 'Görüntülenme ve iletişim analitiği',

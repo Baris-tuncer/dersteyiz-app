@@ -101,15 +101,28 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const purchaseSubscription = useCallback(async () => {
     const rc = await loadPurchases();
     if (!rc) {
-      Alert.alert('Hata', 'Satın alma servisi şu anda kullanılamıyor.');
+      Alert.alert('Hata', 'Satın alma servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.');
       return;
     }
 
     try {
+      // Ensure RevenueCat is configured before purchase
+      const apiKey = REVENUECAT_API_KEY;
+      if (apiKey && !apiKey.includes('XXXXXXXXX') && Platform.OS !== 'web') {
+        try {
+          await rc.configure({ apiKey });
+        } catch {
+          // Already configured, ignore
+        }
+      }
+
       const offerings = await rc.getOfferings();
       const pkg = offerings.current?.availablePackages?.[0];
       if (!pkg) {
-        Alert.alert('Hata', 'Abonelik paketi bulunamadı.');
+        Alert.alert(
+          'Abonelik Bulunamadı',
+          'Abonelik paketi yüklenemedi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.',
+        );
         return;
       }
 
@@ -117,7 +130,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       await checkSubscription();
     } catch (e: any) {
       if (!e.userCancelled) {
-        Alert.alert('Hata', 'Satın alma işlemi başarısız oldu.');
+        const msg = e?.message || 'Bilinmeyen hata';
+        Alert.alert('Satın Alma Hatası', `İşlem tamamlanamadı: ${msg}`);
       }
     }
   }, [checkSubscription]);

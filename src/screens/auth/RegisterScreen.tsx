@@ -55,7 +55,7 @@ export default function RegisterScreen() {
       Alert.alert('Hata', 'Lütfen geçerli bir ad ve soyad girin. Soyad en az 2 harf olmalıdır.');
       return;
     }
-    if (!validatePhone(phone)) {
+    if (phone.trim() && !validatePhone(phone)) {
       Alert.alert('Hata', 'Lütfen geçerli bir telefon numarası girin.');
       return;
     }
@@ -161,7 +161,7 @@ export default function RegisterScreen() {
 
           {/* Phone */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Telefon <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Telefon <Text style={styles.optional}>(İsteğe bağlı)</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="05XX XXX XX XX"
@@ -297,6 +297,11 @@ const styles = StyleSheet.create({
   required: {
     color: '#E53935',
     fontWeight: '700',
+  },
+  optional: {
+    color: Colors.textTertiary,
+    fontWeight: '400',
+    fontSize: 12,
   },
   input: {
     backgroundColor: Colors.surface,
