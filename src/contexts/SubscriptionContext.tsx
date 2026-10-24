@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform, Alert } from 'react-native';
 import { useAuth } from './AuthContext';
+import { supabase } from '../config/supabase';
 import { REVENUECAT_API_KEY, ENTITLEMENT_ID, MONTHLY_PRICE } from '../constants/subscription';
 
 interface SubscriptionState {
@@ -51,6 +52,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const info = await rc.getCustomerInfo();
       const isPremium = !!info.entitlements.active[ENTITLEMENT_ID];
       setState((s) => ({ ...s, isLoading: false, isPremium }));
+
+      // Sync subscription status to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('teachers')
+          .update({ subscription_status: isPremium })
+          .eq('profile_id', user.id);
+      }
     } catch {
       setState((s) => ({ ...s, isLoading: false }));
     }
